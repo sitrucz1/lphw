@@ -2,6 +2,7 @@
 """ Prompting People """
 
 from __future__ import print_function, division
+from builtins import input  # pylint: disable=redefined-builtin
 
 def main():
     """ Main routine """
