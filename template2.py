@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 """ Template """
 
 from __future__ import print_function, division

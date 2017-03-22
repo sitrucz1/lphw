@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 """ Reading the File test.txt """
 
 from __future__ import print_function, division

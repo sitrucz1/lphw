@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 """ Reading and Writing Files """
 
 from __future__ import print_function, division

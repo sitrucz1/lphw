@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 """ Names, Variables, Code, Functions """
 
 from __future__ import print_function, division
