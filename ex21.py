@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+""" Function Can Return Something """
+
+from __future__ import print_function, division
+
+# pylint: disable=invalid-name
+
+def main():
+    """ Main routine """
+    print("Let's do some math with just functions!")
+    age = add(30, 5)
+    height = subtract(78, 4)
+    weight = multiply(90, 2)
+    iq = divide(100, 2)
+
+    print("Age: {}, Height: {}, Weight: {}, IQ: {}".format(age, height, weight, iq))
+
+    # A puzzle for the extra credit, type it in anyway.
+    print("Here is a puzzle.")
+
+    what = add(age, subtract(height, multiply(weight, divide(iq, 2))))
+
+    print("That becomes: ", what, "Can you do it by hand?")
+
+def add(a, b):
+    """ Add function """
+    print("ADDING {} + {}".format(a, b))
+    return a + b
+
+def subtract(a, b):
+    """ Subtract function """
+    print("SUBTRACTING {} - {}".format(a, b))
+    return a - b
+
+def multiply(a, b):
+    """ Multiply function """
+    print("MULTIPLYING {} * {}".format(a, b))
+    return a * b
+
+def divide(a, b):
+    """ Divide function """
+    print("DIVIDING {} // {}".format(a, b))
+    return a // b
+
+if __name__ == "__main__":
+    main()
