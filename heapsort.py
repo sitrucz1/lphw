@@ -13,7 +13,7 @@ def main():
     print(arr)
     heap_put(arr, 4)
     print(arr)
-    heapsort(arr)
+    _heapsort(arr)
     print(arr)
 
 def heap_put(arr, data):
@@ -21,68 +21,86 @@ def heap_put(arr, data):
     arr.append(data)
     _siftup(arr, len(arr)-1)
 
-def _siftup(arr, i):
-    """ Sifts node i up the heap to the proper location """
-    while i:
-        parent = (i-1) // 2
-        if arr[i] <= arr[parent]:
-            break
-        arr[i], arr[parent] = arr[parent], arr[i]
-        i = parent
+def heap_get(arr):
+    """ Peeks at the value at the top of the heap """
+    if len(arr):
+        return arr[0]
+    else:
+        return
 
-def _siftdown(arr, i):
-    """ Sifts the heap item at location i down the heap """
-    lastleaf = len(arr) - 1
-    child = i * 2 + 1           # left child
-    while child <= lastleaf:
-        if child < lastleaf and arr[child+1] > arr[child]:
-            child += 1          # right child
-        if arr[i] >= arr[child]:
+def heap_pop(arr):
+    """ Deletes the root from the heap """
+    heapsize = len(arr)
+    if not heapsize:
+        return
+    arr[0], arr[heapsize-1] = arr[heapsize-1], arr[0]
+    _siftdown(arr, 0, heapsize-1)
+    return arr.pop()
+
+def _siftup(arr, root):
+    """ Sifts node i up the heap to the proper location """
+    while root:
+        parent = (root-1) // 2
+        if arr[root] <= arr[parent]:
             break
-        arr[i], arr[child] = arr[child], arr[i]
-        i = child
-        child = i * 2 + 1
+        arr[root], arr[parent] = arr[parent], arr[root]
+        root = parent
+
+def _siftdown(arr, root, heapsize):
+    """ Sifts the heap item at location i down the heap """
+    child = root * 2 + 1        # left child
+    while child < heapsize:
+        if child < (heapsize-1) and arr[child+1] > arr[child]:
+            child += 1          # right child
+        if arr[root] >= arr[child]:
+            break
+        arr[root], arr[child] = arr[child], arr[root]
+        root = child
+        child = root * 2 + 1
 
 def heap_heapify(arr):
     """ Creates a max heap from an array """
-    for i in range((len(arr)-1) // 2, -1, -1):
-        _siftdown(arr, i)
+    heapsize = len(arr)
+    for i in range((heapsize-2) // 2, -1, -1):
+        _siftdown(arr, i, heapsize)
 
 def _heapsort(arr):
     """ Sorts arr using a heap """
     heap_heapify(arr)
-    # need to think here
+    for i in range(len(arr)-1, 0, -1):
+        arr[0], arr[i] = arr[i], arr[0]
+        _siftdown(arr, 0, i)
 
 def heapsort(arr):
     """ Heapsort """
     # Make the heap
-    lastleaf = len(arr) - 1
-    for i in range((lastleaf-1) // 2, -1, -1):
-        parent = i
-        child = parent * 2 + 1      # left child
-        while child <= lastleaf:
-            if child < lastleaf and arr[child+1] > arr[child]:
+    heapsize = len(arr)
+    for i in range((heapsize-2) // 2, -1, -1):
+        root = i
+        child = root * 2 + 1        # left child
+        while child < heapsize:
+            if child < (heapsize-1) and arr[child+1] > arr[child]:
                 child += 1          # right child
-            if arr[parent] > arr[child]:
+            if arr[root] >= arr[child]:
                 break
-            arr[parent], arr[child] = arr[child], arr[parent]
-            parent = child
-            child = parent * 2 + 1
+            arr[root], arr[child] = arr[child], arr[root]
+            root = child
+            child = root * 2 + 1
     print(arr)
     # Sort the heap
     for i in range(len(arr)-1, 0, -1):
         arr[0], arr[i] = arr[i], arr[0]
-        lastleaf = i-1
-        parent = 0
-        child = parent * 2 + 1      # left child
-        while child <= lastleaf:
-            if child < lastleaf and arr[child+1] > arr[child]:
+        heapsize = i
+        root = 0
+        child = 1                   # left child
+        while child < heapsize:
+            if child < (heapsize-1) and arr[child+1] > arr[child]:
                 child += 1          # right child
-            if arr[parent] > arr[child]:
+            if arr[root] >= arr[child]:
                 break
-            arr[parent], arr[child] = arr[child], arr[parent]
-            parent = child
-            child = parent * 2 + 1
+            arr[root], arr[child] = arr[child], arr[root]
+            root = child
+            child = root * 2 + 1    # left child
 
 if __name__ == "__main__":
     main()
