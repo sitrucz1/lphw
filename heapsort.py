@@ -39,12 +39,11 @@ def heap_pop(arr):
 
 def _siftup(arr, root):
     """ Sifts node i up the heap to the proper location """
-    while root:
-        parent = (root-1) // 2
-        if arr[root] <= arr[parent]:
-            break
+    parent = (root-1) // 2
+    while root and arr[root] > arr[parent]:
         arr[root], arr[parent] = arr[parent], arr[root]
         root = parent
+        parent = (root-1) // 2
 
 def _siftdown(arr, root, heapsize):
     """ Sifts the heap item at location i down the heap """
