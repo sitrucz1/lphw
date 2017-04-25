@@ -2,17 +2,19 @@
 """ Heapsort in Python """
 
 from __future__ import print_function, division
+from random import randrange
 
 def main():
     """ Main routine """
     arr = [3, 7, 1, 2, 9, 0, 5, 8, 4, 6]
-    print(arr)
+    print(_heap_isheap(arr), arr)
     heap_heapify(arr)
-    print(arr)
-    heap_put(arr, 12)
-    print(arr)
-    heap_put(arr, 4)
-    print(arr)
+    print(_heap_isheap(arr), arr)
+    for _ in range(10):
+        heap_put(arr, randrange(20))
+    print(_heap_isheap(arr), arr)
+    heap_pop(arr)
+    print(_heap_isheap(arr), arr)
     _heapsort(arr)
     print(arr)
 
@@ -37,25 +39,39 @@ def heap_pop(arr):
     _siftdown(arr, 0, heapsize-1)
     return arr.pop()
 
+def _heap_isheap(arr):
+    heapsize = len(arr)
+    for i in range(0, (heapsize-2) // 2 + 1):
+        child = i*2+1   # left child
+        if arr[i] < arr[child] or (child < (heapsize-1) and arr[i] < arr[child+1]):
+            print("Node index {}={} has a child that doesn't match {}={} or {}={}.".format(
+                i, arr[i], child, arr[child], child+1, arr[child+1]))
+            return False
+    return True
+
 def _siftup(arr, root):
-    """ Sifts node i up the heap to the proper location """
+    """ Sifts node root up the heap to the proper location """
+    save = arr[root]
     parent = (root-1) // 2
-    while root and arr[root] > arr[parent]:
-        arr[root], arr[parent] = arr[parent], arr[root]
+    while root and save > arr[parent]:
+        arr[root] = arr[parent]
         root = parent
         parent = (root-1) // 2
+    arr[root] = save
 
 def _siftdown(arr, root, heapsize):
-    """ Sifts the heap item at location i down the heap """
+    """ Sifts the heap item at location root down the heap """
+    save = arr[root]
     child = root * 2 + 1        # left child
     while child < heapsize:
         if child < (heapsize-1) and arr[child+1] > arr[child]:
             child += 1          # right child
-        if arr[root] >= arr[child]:
+        if save >= arr[child]:
             break
-        arr[root], arr[child] = arr[child], arr[root]
+        arr[root] = arr[child]
         root = child
         child = root * 2 + 1
+    arr[root] = save
 
 def heap_heapify(arr):
     """ Creates a max heap from an array """
@@ -76,30 +92,34 @@ def heapsort(arr):
     heapsize = len(arr)
     for i in range((heapsize-2) // 2, -1, -1):
         root = i
+        save = arr[root]
         child = root * 2 + 1        # left child
         while child < heapsize:
             if child < (heapsize-1) and arr[child+1] > arr[child]:
                 child += 1          # right child
-            if arr[root] >= arr[child]:
+            if save >= arr[child]:
                 break
-            arr[root], arr[child] = arr[child], arr[root]
+            arr[root] = arr[child]
             root = child
             child = root * 2 + 1
+        arr[root] = save
     print(arr)
     # Sort the heap
     for i in range(len(arr)-1, 0, -1):
         arr[0], arr[i] = arr[i], arr[0]
         heapsize = i
         root = 0
+        save = arr[0]
         child = 1                   # left child
         while child < heapsize:
             if child < (heapsize-1) and arr[child+1] > arr[child]:
                 child += 1          # right child
-            if arr[root] >= arr[child]:
+            if save >= arr[child]:
                 break
-            arr[root], arr[child] = arr[child], arr[root]
+            arr[root] = arr[child]
             root = child
             child = root * 2 + 1    # left child
+        arr[root] = save
 
 if __name__ == "__main__":
     main()
