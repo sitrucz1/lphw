@@ -43,7 +43,8 @@ def _heap_isheap(arr):
     heapsize = len(arr)
     for i in range(0, (heapsize-2) // 2 + 1):
         child = i*2+1   # left child
-        if arr[i] < arr[child] or (child < (heapsize-1) and arr[i] < arr[child+1]):
+        if (child < heapsize and arr[i] < arr[child]) or \
+                (child < (heapsize-1) and arr[i] < arr[child+1]):
             print("Node index {}={} has a child that doesn't match {}={} or {}={}.".format(
                 i, arr[i], child, arr[child], child+1, arr[child+1]))
             return False
