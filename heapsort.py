@@ -40,13 +40,11 @@ def heap_pop(arr):
     return arr.pop()
 
 def _heap_isheap(arr):
-    heapsize = len(arr)
-    for i in range(0, (heapsize-2) // 2 + 1):
-        child = i*2+1   # left child
-        if (child < heapsize and arr[i] < arr[child]) or \
-                (child < (heapsize-1) and arr[i] < arr[child+1]):
-            print("Node index {}={} has a child that doesn't match {}={} or {}={}.".format(
-                i, arr[i], child, arr[child], child+1, arr[child+1]))
+    for child in range(len(arr)-1, 0, -1):
+        parent = (child-1) // 2
+        if arr[child] > arr[parent]:
+            print("Node index {}={} has a child that doesn't match {}={}.".format(
+                parent, arr[parent], child, arr[child]))
             return False
     return True
 
