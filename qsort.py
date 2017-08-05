@@ -8,7 +8,7 @@ def main():
     arr = [3, 7, 1, 2, 9, 0, 5, 8, 4, 6]
     # arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     print(arr)
-    qsort2(arr, 0, len(arr)-1)
+    qsort(arr, 0, len(arr)-1)
     print(arr)
 
 def insertsort(arr, left, right):
@@ -26,6 +26,7 @@ def qsort(arr, left, right):
     Hoare's partition quicksort scheme with median of three and tail
     recursion elimination
     """
+    print(left, right)
     # pylint: disable=too-many-branches
     while left < right:
         # median of 3 - arr[left+1] <= arr[left] <= arr[right]
