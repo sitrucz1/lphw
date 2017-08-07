@@ -46,32 +46,34 @@ class tavltree
     end sub
 
     public function put(byval item)
-        set m_root = putitem(m_root, item)
+        dim done : done = false
+        set m_root = putitem(m_root, item, done)
     end function
 
-    private function putitem(byval node, byval item)
+    private function putitem(byval node, byval item, byref done)
         if node is nothing then
             set putitem = item
         elseif item.m_item = node.m_item then
             set putitem = node
-        elseif item.m_item < node.m_item then
-            set node.m_left = putitem(node.m_left, item)
-            node.m_bal = node.m_left.m_bal-1
-            if node.m_bal < -1 and node.m_right.m_bal = 1 then
-                set node.m_left = rotateleft(node.m_left)
-                set node = rotateright(node)
-            elseif node.m_bal < -1 and node.m_right.m_bal = -1 then
-                set node = rotateright(node)
-            end if
-            set putitem = node
         else
-            set node.m_right = putitem(node.m_right, item)
-            node.m_bal = node.m_right.m_bal+1
-            if node.m_bal > 1 and node.m_right.m_bal = -1 then
-                set node.m_right = rotateright(node.m_right)
-                set node = rotateleft(node)
-            elseif node.m_bal > 1 and node.m_right.m_bal = 1 then
-                set node = rotateleft(node)
+            if item.m_item < node.m_item then
+                set node.m_left = putitem(node.m_left, item)
+                ' node.m_bal = node.m_left.m_bal-1
+                ' if node.m_bal < -1 and node.m_right.m_bal = 1 then
+                '     set node.m_left = rotateleft(node.m_left)
+                '     set node = rotateright(node)
+                ' elseif node.m_bal < -1 and node.m_right.m_bal = -1 then
+                '     set node = rotateright(node)
+                ' end if
+            else
+                set node.m_right = putitem(node.m_right, item)
+                ' node.m_bal = node.m_right.m_bal+1
+                ' if node.m_bal > 1 and node.m_right.m_bal = -1 then
+                '     set node.m_right = rotateright(node.m_right)
+                '     set node = rotateleft(node)
+                ' elseif node.m_bal > 1 and node.m_right.m_bal = 1 then
+                '     set node = rotateleft(node)
+                ' end if
             end if
             set putitem = node
         end if
