@@ -10,7 +10,9 @@ sub main()
     dim avltree : set avltree = new tavltree
     avltree.put((new tavlitem).init(15))
     avltree.put((new tavlitem).init(10))
-    avltree.put((new tavlitem).init(7))
+    avltree.put((new tavlitem).init(27))
+    avltree.put((new tavlitem).init(5))
+    avltree.put((new tavlitem).init(2))
     avltree.print
 end sub
 
@@ -54,11 +56,20 @@ class tavltree
         if node is nothing then
             set putitem = item
         elseif item.m_item = node.m_item then
+            done = true
             set putitem = node
         else
             if item.m_item < node.m_item then
-                set node.m_left = putitem(node.m_left, item)
-                ' node.m_bal = node.m_left.m_bal-1
+                set node.m_left = putitem(node.m_left, item, done)
+                if not done then
+                    node.m_bal = node.m_bal-1
+                    if node.m_bal = 0 then
+                        done = true
+                    elseif node.m_bal = -2 then
+                        wscript.echo "Rabalance at " & node.m_item
+                        done = true
+                    end if
+                end if
                 ' if node.m_bal < -1 and node.m_right.m_bal = 1 then
                 '     set node.m_left = rotateleft(node.m_left)
                 '     set node = rotateright(node)
@@ -66,8 +77,16 @@ class tavltree
                 '     set node = rotateright(node)
                 ' end if
             else
-                set node.m_right = putitem(node.m_right, item)
-                ' node.m_bal = node.m_right.m_bal+1
+                set node.m_right = putitem(node.m_right, item, done)
+                if not done then
+                    node.m_bal = node.m_bal+1
+                    if node.m_bal = 0 then
+                        done = true
+                    elseif node.m_bal = 2 then
+                        wscript.echo "Rabalance at " & node.m_item
+                        done = true
+                    end if
+                end if
                 ' if node.m_bal > 1 and node.m_right.m_bal = -1 then
                 '     set node.m_right = rotateright(node.m_right)
                 '     set node = rotateleft(node)
