@@ -5,16 +5,66 @@
 option explicit
 
 sub main()
-    dim avlitem : set avlitem = (new tavlitem).init(5)
-
+    dim arr : arr = array(5, 2, 4, 10, 12, -5, 16, 17, 1, 8, 14, 19, 13, 11, 6, 9, 3, 7)
     dim avltree : set avltree = new tavltree
-    avltree.put((new tavlitem).init(15))
-    avltree.put((new tavlitem).init(10))
-    avltree.put((new tavlitem).init(27))
-    avltree.put((new tavlitem).init(5))
-    avltree.put((new tavlitem).init(2))
+    dim i : i = 0
+    randomize timer
+    do
+        avltree.put((new tavlitem).init(int(rnd*100)))
+        ' avltree.print
+        ' wscript.stdin.read(1)
+        ' wscript.stdout.writeline
+        i = i+1
+    loop until i > 50 or not avltree.isavl()
     avltree.print
+    for i = 1 to treeheight(avltree.m_root)
+        breadthprint avltree.m_root, i
+    next
+    wscript.stdout.writeline
+    ibreadthprint avltree.m_root
+    wscript.stdout.writeline
 end sub
+
+sub breadthprint(byval node, byval level)
+    if not node is nothing then
+        if level = 1 then
+            wscript.stdout.write node.m_item & " "
+        elseif level > 1 then
+            breadthprint node.m_left, level-1
+            breadthprint node.m_right, level-1
+        end if
+    end if
+end sub
+
+sub ibreadthprint(byval node)
+    dim queue(25), qhead, qtail, qcnt : qhead = 0 : qtail = -1 : qcnt = 0
+    qtail = (qtail+1) mod 25 : set queue(qtail) = node : qcnt = qcnt+1     ' enqueue
+    do until qcnt = 0 or node is nothing
+        set node = queue(qhead) : qhead = (qhead+1) mod 25 : qcnt = qcnt-1  ' dequeue
+        wscript.stdout.write node.m_item & " "
+        if not node.m_left is nothing then
+            qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_left : qcnt = qcnt+1     ' enqueue
+        end if
+        if not node.m_right is nothing then
+            qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_right : qcnt = qcnt+1     ' enqueue
+        end if
+    loop
+    wscript.stdout.writeline
+end sub
+
+function treeheight(node)
+    if node is nothing then
+        treeheight = 0
+    else
+        dim lh : lh = treeheight(node.m_left)
+        dim rh : rh = treeheight(node.m_right)
+        if lh > rh then
+            treeheight = 1 + lh
+        else
+            treeheight = 1 + rh
+        end if
+    end if
+end function
 
 class tavlitem
 
@@ -47,8 +97,52 @@ class tavltree
         m_cnt = 0
     end sub
 
+    private function isless(a, b)
+        if a is nothing or b is nothing then
+            isless = false
+        else
+            isless = (a.m_item < b.m_item)
+        end if
+    end function
+
+    private function max(a, b)
+        if a > b then
+            max = a
+        else
+            max = b
+        end if
+    end function
+
+    public function isavl()
+        isavl = (isavlnode(m_root) <> -1)
+    end function
+
+    private function isavlnode(byval node)
+        if node is nothing then
+            isavlnode = 0
+        elseif isless(node, node.m_left) or isless(node.m_right, node) then
+            wscript.echo "ERROR: not a BST"
+            isavlnode = -1
+        elseif node.m_bal < -1 or node.m_bal > 1 then
+            wscript.echo "ERROR: node balance is out of range"
+            isavlnode = -1
+        else
+            dim lh : lh = isavlnode(node.m_left)
+            dim rh : rh = isavlnode(node.m_right)
+            if lh = -1 or rh = -1 then
+                isavlnode = -1  ' an error above already trapped this dont echo
+            elseif node.m_bal <> (rh - lh) then
+                wscript.echo "ERROR: node balance doesn't match heights", node.m_item, node.m_bal
+                isavlnode = -1
+            else
+                isavlnode = 1 + max(lh, rh)
+            end if
+        end if
+    end function
+
     public function put(byval item)
         dim done : done = false
+        wscript.echo "Put ", item.m_item
         set m_root = putitem(m_root, item, done)
     end function
 
@@ -58,41 +152,46 @@ class tavltree
         elseif item.m_item = node.m_item then
             done = true
             set putitem = node
+        elseif item.m_item < node.m_item then
+            set node.m_left = putitem(node.m_left, item, done)
+            if not done then
+                node.m_bal = node.m_bal-1
+                if node.m_bal = 0 then
+                    done = true
+                elseif node.m_bal = -2 then
+                    wscript.echo "Rebalance at " & node.m_item
+                    if item.m_item > node.m_left.m_item then
+                        set node.m_left = rotateleft(node.m_left)
+                        set node = rotateright(node)
+                        adjustbal node
+                    else
+                        set node = rotateright(node)
+                        node.m_bal = 0
+                        node.m_right.m_bal = 0
+                    end if
+                    done = true
+                end if
+            end if
+            set putitem = node
         else
-            if item.m_item < node.m_item then
-                set node.m_left = putitem(node.m_left, item, done)
-                if not done then
-                    node.m_bal = node.m_bal-1
-                    if node.m_bal = 0 then
-                        done = true
-                    elseif node.m_bal = -2 then
-                        wscript.echo "Rabalance at " & node.m_item
-                        done = true
+            set node.m_right = putitem(node.m_right, item, done)
+            if not done then
+                node.m_bal = node.m_bal+1
+                if node.m_bal = 0 then
+                    done = true
+                elseif node.m_bal = 2 then
+                    wscript.echo "Rebalance at " & node.m_item
+                    if item.m_item < node.m_right.m_item then
+                        set node.m_right = rotateright(node.m_right)
+                        set node = rotateleft(node)
+                        adjustbal node
+                    else
+                        set node = rotateleft(node)
+                        node.m_bal = 0
+                        node.m_left.m_bal = 0
                     end if
+                    done = true
                 end if
-                ' if node.m_bal < -1 and node.m_right.m_bal = 1 then
-                '     set node.m_left = rotateleft(node.m_left)
-                '     set node = rotateright(node)
-                ' elseif node.m_bal < -1 and node.m_right.m_bal = -1 then
-                '     set node = rotateright(node)
-                ' end if
-            else
-                set node.m_right = putitem(node.m_right, item, done)
-                if not done then
-                    node.m_bal = node.m_bal+1
-                    if node.m_bal = 0 then
-                        done = true
-                    elseif node.m_bal = 2 then
-                        wscript.echo "Rabalance at " & node.m_item
-                        done = true
-                    end if
-                end if
-                ' if node.m_bal > 1 and node.m_right.m_bal = -1 then
-                '     set node.m_right = rotateright(node.m_right)
-                '     set node = rotateleft(node)
-                ' elseif node.m_bal > 1 and node.m_right.m_bal = 1 then
-                '     set node = rotateleft(node)
-                ' end if
             end if
             set putitem = node
         end if
@@ -113,6 +212,25 @@ class tavltree
         set temp.m_right = node
         set rotateright = temp
     end function
+
+    private sub adjustbal(byref node)
+        ' node.m_bal is prior to the double rotation that
+        ' moves node up to the root (ie node).  once we double rotate
+        ' we need to update the balances but node could have
+        ' had 3 conditions 0, 1, -1.  I drew it out on paper
+        ' so these numbers may seem confusing without a copy of my notes.
+        if node.m_bal = 0 then
+            node.m_left.m_bal = 0
+            node.m_right.m_bal = 0
+        elseif node.m_bal = 1 then
+            node.m_left.m_bal = -1
+            node.m_right.m_bal = 0
+        else ' node.m_bal = -1
+            node.m_left.m_bal = 0
+            node.m_right.m_bal = 1
+        end if
+        node.m_bal = 0
+    end sub
 
     public sub print()
         printitem m_root
