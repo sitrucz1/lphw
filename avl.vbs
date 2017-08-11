@@ -15,7 +15,7 @@ sub main()
         ' wscript.stdin.read(1)
         ' wscript.stdout.writeline
         i = i+1
-    loop until i > 50 or not avltree.isavl()
+    loop until i > 75 or not avltree.isavl()
     avltree.print
     for i = 1 to treeheight(avltree.m_root)
         breadthprint avltree.m_root, i
@@ -23,6 +23,11 @@ sub main()
     wscript.stdout.writeline
     ibreadthprint avltree.m_root
     wscript.stdout.writeline
+    do
+        ' avltree.print
+        set avltree.m_root = avltree.delete(avltree.m_root)
+    loop until not avltree.isavl() or avltree.m_root is nothing
+    avltree.print
 end sub
 
 sub breadthprint(byval node, byval level)
@@ -195,6 +200,110 @@ class tavltree
             end if
             set putitem = node
         end if
+    end function
+
+    public function delete(byval item)
+        dim done : done = false
+        wscript.echo "Delete " & item.m_item
+        set m_root = deletenode(m_root, item, done)
+        set delete = m_root
+    end function
+
+    private function deletenode(byval node, byval item, byref done)
+        if node is nothing then
+            set deletenode = node
+        elseif item.m_item < node.m_item then
+            set node.m_left = deletenode(node.m_left, item, done)
+            set node = balance(node, true, done)
+            set deletenode = node
+        elseif item.m_item > node.m_item then
+            set node.m_right = deletenode(node.m_right, item, done)
+            set node = balance(node, false, done)
+            set deletenode = node
+        else ' node.m_item = item.m_item
+            if node.m_left is nothing then
+                set deletenode = node.m_right
+            elseif node.m_right is nothing then
+                set deletenode = node.m_left
+            else ' two children
+                dim succ : set succ = node.m_right
+                do until succ.m_left is nothing
+                    set succ = succ.m_left
+                loop
+                node.m_item = succ.m_item
+                set node.m_right = deletenode(node.m_right, succ, done)
+                set node = balance(node, false, done)
+                set deletenode = node
+            end if
+        end if
+    end function
+
+    private function balance(byval node, byval isleft, byref done)
+        if done then
+            set balance = node
+            exit function
+        end if
+        dim child, gchild
+        if isleft then
+            node.m_bal = node.m_bal+1
+            if node.m_bal = 1 then
+                done = true
+            elseif node.m_bal = 2 then
+                set child = node.m_right
+                if child.m_bal > -1 then
+                    set gchild = child.m_right
+                else
+                    set gchild = child.m_left
+                end if
+                ' rotate
+                wscript.echo "Rebalance at " & node.m_item
+                if child.m_left is gchild then
+                    set node.m_right = rotateright(node.m_right)
+                    set node = rotateleft(node)
+                    adjustbal node
+                else
+                    set node = rotateleft(node)
+                    if node.m_bal = 0 then
+                        node.m_bal = -1
+                        node.m_left.m_bal = 1
+                        done = true ' b/c node balance <> 0
+                    else
+                        node.m_bal = 0
+                        node.m_left.m_bal = 0
+                    end if
+                end if
+            end if
+        else
+            node.m_bal = node.m_bal-1
+            if node.m_bal = -1 then
+                done = true
+            elseif node.m_bal = -2 then
+                set child = node.m_left
+                if child.m_bal < 1 then
+                    set gchild = child.m_left
+                else
+                    set gchild = child.m_right
+                end if
+                ' rotate
+                wscript.echo "Rebalance at " & node.m_item
+                if child.m_right is gchild then
+                    set node.m_left = rotateleft(node.m_left)
+                    set node = rotateright(node)
+                    adjustbal node
+                else
+                    set node = rotateright(node)
+                    if node.m_bal = 0 then
+                        node.m_bal = 1
+                        node.m_right.m_bal = -1
+                        done = true ' b/c node balance <> 0
+                    else
+                        node.m_bal = 0
+                        node.m_right.m_bal = 0
+                    end if
+                end if
+            end if
+        end if
+        set balance = node
     end function
 
     private function rotateleft(byval node)
