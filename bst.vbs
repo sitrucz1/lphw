@@ -7,7 +7,13 @@ sub main()
     set tree.m_root.m_child(0).m_child(0) = (new tbstnode).init(1)
     set tree.m_root.m_child(0).m_child(0).m_child(1) = (new tbstnode).init(2)
     set tree.m_root.m_child(1) = (new tbstnode).init(7)
-    tree.traverse tree.m_root
+    ' tree.traverse tree.m_root
+    tree.preorderr
+    tree.preorderi
+    tree.inorderr
+    tree.inorderi
+    tree.postorderr
+    tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
     if tree.bstfindr(7) is nothing then
         wscript.echo "not found"
@@ -250,6 +256,95 @@ class tbst
         end if
         set bstdeletei = node
     end function
+
+    public sub preorderr()
+        preorderrnode(m_root)
+        wscript.stdout.writeline
+    end sub
+
+    private sub preorderrnode(byval node)
+        if not node is nothing then
+            wscript.stdout.write node.m_data & " "
+            preorderrnode(node.m_child(0))
+            preorderrnode(node.m_child(1))
+        end if
+    end sub
+
+    public sub preorderi()
+        dim stack(25), scnt : scnt = 0
+        dim node : set node = m_root
+        do until node is nothing and scnt = 0
+            if not node is nothing then
+                wscript.stdout.write node.m_data & " "
+                set stack(scnt) = node : scnt = scnt+1  ' push node
+                set node = node.m_child(0)  ' left child
+            else
+                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                set node = node.m_child(1)  ' right child
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
+
+    public sub inorderr()
+        inorderrnode(m_root)
+        wscript.stdout.writeline
+    end sub
+
+    private sub inorderrnode(byval node)
+        if not node is nothing then
+            inorderrnode(node.m_child(0))
+            wscript.stdout.write node.m_data & " "
+            inorderrnode(node.m_child(1))
+        end if
+    end sub
+
+    public sub inorderi()
+        dim stack(25), scnt : scnt = 0
+        dim node : set node = m_root
+        do until node is nothing and scnt = 0
+            if not node is nothing then
+                set stack(scnt) = node : scnt = scnt+1  ' push node
+                set node = node.m_child(0)  ' left child
+            else
+                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                wscript.stdout.write node.m_data & " "
+                set node = node.m_child(1)  ' right child
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
+
+    public sub postorderr()
+        postorderrnode(m_root)
+        wscript.stdout.writeline
+    end sub
+
+    private sub postorderrnode(byval node)
+        if not node is nothing then
+            postorderrnode(node.m_child(0))
+            postorderrnode(node.m_child(1))
+            wscript.stdout.write node.m_data & " "
+        end if
+    end sub
+
+    public sub levelorderi()
+        dim queue(25), qhead, qtail, qcnt : qhead = 0 : qtail = -1 : qcnt = 0
+        if not m_root is nothing then
+            qtail = (qtail+1) mod 25 : set queue(qtail) = m_root : qcnt = qcnt+1    ' enqueue root
+        end if
+        do until qcnt = 0
+            dim node : set node = queue(qhead) : qhead = (qhead+1) mod 25 : qcnt = qcnt-1   ' dequeue
+            wscript.stdout.write node.m_data & " "
+            if not node.m_child(0) is nothing then
+                qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_child(0) : qcnt = qcnt+1    ' enqueue left child
+            end if
+            if not node.m_child(1) is nothing then
+                qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_child(1) : qcnt = qcnt+1    ' enqueue right child
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
 end class
 
