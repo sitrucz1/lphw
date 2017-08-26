@@ -7,12 +7,12 @@ sub main()
     set tree.m_root.m_child(0).m_child(0) = (new tbstnode).init(1)
     set tree.m_root.m_child(0).m_child(0).m_child(1) = (new tbstnode).init(2)
     set tree.m_root.m_child(1) = (new tbstnode).init(7)
-    ' tree.traverse tree.m_root
     tree.preorderr
     tree.preorderi
     tree.inorderr
     tree.inorderi
     tree.postorderr
+    tree.postorderi
     tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
     if tree.bstfindr(7) is nothing then
@@ -43,11 +43,11 @@ sub main()
     tree.bstputr(2)
     tree.bstputr(7)
     tree.bstputr(7)
-    tree.traverse(tree.m_root)
+    tree.levelorderi
     tree.bstdeleter(2)
-    tree.traverse(tree.m_root)
+    tree.levelorderi
     tree.bstdeleter(5)
-    tree.traverse(tree.m_root)
+    tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
     set tree = nothing
     set tree = new tbst
@@ -56,12 +56,12 @@ sub main()
     tree.bstputi(1)
     tree.bstputi(2)
     tree.bstputi(7)
-    tree.traverse(tree.m_root)
+    tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
     tree.bstdeletei(1)
-    tree.traverse(tree.m_root)
+    tree.levelorderi
     tree.bstdeletei(5)
-    tree.traverse(tree.m_root)
+    tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
 end sub
 
@@ -87,22 +87,6 @@ class tbst
     private sub class_initialize()
         set m_root = nothing
         m_cnt = 0
-    end sub
-
-    public sub traverse(byval node)
-        dim queue(25), qhead, qtail, qcnt : qhead = 0 : qtail = -1 : qcnt = 0
-        qtail = (qtail+1) mod 25 : set queue(qtail) = node : qcnt = qcnt+1     ' enqueue
-        do until qcnt = 0 or node is nothing
-            set node = queue(qhead) : qhead = (qhead+1) mod 25 : qcnt = qcnt-1  ' dequeue
-            wscript.stdout.write node.m_data & " "
-            if not node.m_child(0) is nothing then
-                qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_child(0) : qcnt = qcnt+1     ' enqueue
-            end if
-            if not node.m_child(1) is nothing then
-                qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_child(1) : qcnt = qcnt+1     ' enqueue
-            end if
-        loop
-        wscript.stdout.writeline
     end sub
 
     private function isless(a, b)
@@ -326,6 +310,28 @@ class tbst
             postorderrnode(node.m_child(1))
             wscript.stdout.write node.m_data & " "
         end if
+    end sub
+
+    public sub postorderi()
+        dim stack(25), scnt : scnt = 0
+        dim node, prev : set node = m_root : set prev = nothing
+        do until node is nothing and scnt = 0
+            if not node is nothing then
+                set stack(scnt) = node : scnt = scnt+1  ' push node
+                set node = node.m_child(0)  ' left child
+            else
+                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                    wscript.stdout.write node.m_data & " "
+                    set prev = node
+                    set node = nothing
+                else
+                    set stack(scnt) = node : scnt = scnt+1  ' push node
+                    set node = node.m_child(1)  ' right child
+                end if
+            end if
+        loop
+        wscript.stdout.writeline
     end sub
 
     public sub levelorderi()
