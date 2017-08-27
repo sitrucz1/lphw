@@ -5,8 +5,26 @@ sub main()
     set tree.m_root = (new tbstnode).init(5)
     set tree.m_root.m_child(0) = (new tbstnode).init(3)
     set tree.m_root.m_child(0).m_child(0) = (new tbstnode).init(1)
+    set tree.m_root.m_child(0).m_child(1) = (new tbstnode).init(4)
     set tree.m_root.m_child(0).m_child(0).m_child(1) = (new tbstnode).init(2)
     set tree.m_root.m_child(1) = (new tbstnode).init(7)
+    set tree.m_root.m_child(1).m_child(1) = (new tbstnode).init(10)
+    set tree.m_root.m_child(1).m_child(1).m_child(1) = (new tbstnode).init(15)
+    set tree.m_root.m_child(1).m_child(1).m_child(0) = (new tbstnode).init(9)
+    set tree.m_root.m_child(1).m_child(1).m_child(0).m_child(0) = (new tbstnode).init(8)
+    set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1) = (new tbstnode).init(18)
+    set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1).m_child(1) = (new tbstnode).init(19)
+    '      5
+    '    /   \
+    '   3     7
+    '  / \     \
+    ' 1   4    10
+    ' \        /\
+    '  2      9 15
+    '        /   \
+    '       8    18
+    '             \
+    '             19
     tree.preorderr
     tree.preorderi
     tree.inorderr
@@ -14,6 +32,8 @@ sub main()
     tree.postorderr
     tree.postorderi
     tree.levelorderi
+    wscript.echo tree.heightr
+    wscript.echo tree.heighti
     wscript.echo tree.isbst(tree.m_root)
     if tree.bstfindr(7) is nothing then
         wscript.echo "not found"
@@ -25,7 +45,7 @@ sub main()
     else
         wscript.echo "found"
     end if
-    if tree.bstfindr(4) is nothing then
+    if tree.bstfindr(6) is nothing then
         wscript.echo "not found"
     else
         wscript.echo "found"
@@ -104,7 +124,7 @@ class tbst
             wscript.echo "ERROR: not a BST"
             isbst = false
         else
-            isbst = true
+            isbst = isbst(node.m_child(0)) and isbst(node.m_child(1))
         end if
     end function
 
@@ -351,6 +371,52 @@ class tbst
         loop
         wscript.stdout.writeline
     end sub
+
+    public function heightr()
+        heightr = heightrnode(m_root)
+    end function
+
+    private function heightrnode(node)
+        if node is nothing then
+            heightrnode = 0
+        else
+            dim lh, rh
+            lh = heightrnode(node.m_child(0))
+            rh = heightrnode(node.m_child(1))
+            if lh > rh then
+                heightrnode = 1 + lh
+            else
+                heightrnode = 1 + rh
+            end if
+        end if
+    end function
+
+    public function heighti()
+        dim stack(25), scnt : scnt = 0
+        dim node, prev : set node = m_root : set prev = nothing
+        dim hcnt, hmax : hcnt = 0 : hmax = 0
+        do until node is nothing and scnt = 0
+            if not node is nothing then
+                set stack(scnt) = node : scnt = scnt+1  ' push node
+                hcnt = hcnt+1
+                set node = node.m_child(0)  ' left child
+            else
+                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                    if hcnt > hmax then
+                        hmax = hcnt
+                    end if
+                    hcnt = hcnt-1
+                    set prev = node
+                    set node = nothing
+                else
+                    set stack(scnt) = node : scnt = scnt+1  ' push node
+                    set node = node.m_child(1)  ' right child
+                end if
+            end if
+        loop
+        heighti = hmax
+    end function
 
 end class
 
