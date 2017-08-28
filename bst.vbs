@@ -11,8 +11,8 @@ sub main()
     set tree.m_root.m_child(1) = (new tbstnode).init(7)
     set tree.m_root.m_child(1).m_child(1) = (new tbstnode).init(10)
     set tree.m_root.m_child(1).m_child(1).m_child(1) = (new tbstnode).init(15)
-    set tree.m_root.m_child(1).m_child(1).m_child(0) = (new tbstnode).init(9)
-    set tree.m_root.m_child(1).m_child(1).m_child(0).m_child(0) = (new tbstnode).init(8)
+    set tree.m_root.m_child(1).m_child(1).m_child(0) = (new tbstnode).init(8)
+    set tree.m_root.m_child(1).m_child(1).m_child(0).m_child(1) = (new tbstnode).init(9)
     set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1) = (new tbstnode).init(18)
     set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1).m_child(1) = (new tbstnode).init(19)
     '      5
@@ -20,10 +20,10 @@ sub main()
     '   3     7
     '  / \     \
     ' 1   4    10
-    ' \        /\
-    '  2      9 15
-    '        /   \
-    '       8    18
+    ' \       / \
+    '  2     8  15
+    '        \   \
+    '         9  18
     '             \
     '             19
     tree.preorderr
@@ -119,6 +119,14 @@ class tbst
             isless = false
         else
             isless = (a.m_data < b.m_data)
+        end if
+    end function
+
+    private function max(a, b)
+        if a > b then
+            max = a
+        else
+            max = b
         end if
     end function
 
@@ -388,11 +396,7 @@ class tbst
             dim lh, rh
             lh = heightrnode(node.m_child(0))
             rh = heightrnode(node.m_child(1))
-            if lh > rh then
-                heightrnode = 1 + lh
-            else
-                heightrnode = 1 + rh
-            end if
+            heightrnode = 1 + max(lh, rh)
         end if
     end function
 
