@@ -2,32 +2,32 @@
 ' Queue and Stack data structure
 '
 
-option explicit
+' option explicit
 
-sub main()
-    dim queue : set queue = new tqueue
-    queue.enqueue("a")
-    queue.enqueue("b")
-    ' queue.dequeue()
-    wscript.echo queue.peek()
-    queue.enqueue("c")
-    queue.print()
-    wscript.echo queue.length()
-    do until queue.isempty()
-        queue.dequeue()
-    loop
+' sub main()
+'     dim queue : set queue = new tqueue
+'     queue.enqueue("a")
+'     queue.enqueue("b")
+'     ' queue.dequeue()
+'     wscript.echo queue.peek()
+'     queue.enqueue("c")
+'     queue.print()
+'     wscript.echo queue.length()
+'     do until queue.isempty()
+'         queue.dequeue()
+'     loop
 
-    dim stack : set stack = new tstack
-    stack.push("a")
-    stack.push("b")
-    stack.push("c")
-    stack.peek()
-    stack.print()
-    wscript.echo stack.length()
-    do until stack.isempty()
-        stack.pop()
-    loop
-end sub
+'     dim stack : set stack = new tstack
+'     stack.push("a")
+'     stack.push("b")
+'     stack.push("c")
+'     stack.peek()
+'     stack.print()
+'     wscript.echo stack.length()
+'     do until stack.isempty()
+'         stack.pop()
+'     loop
+' end sub
 
 class tllitem
 
@@ -207,4 +207,4 @@ class tstack
 
 end class
 
-call main()
+' call main()

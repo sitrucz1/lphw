@@ -1,6 +1,7 @@
 option explicit
 
 sub main()
+    includefile "queue.vbs"     ' tqueue and tstack
     dim tree : set tree = new tbst
     set tree.m_root = (new tbstnode).init(5)
     set tree.m_root.m_child(0) = (new tbstnode).init(3)
@@ -83,6 +84,10 @@ sub main()
     tree.bstdeletei(5)
     tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
+end sub
+
+sub includefile(fspec)
+    executeglobal createobject("scripting.filesystemobject").opentextfile(fspec).readall()
 end sub
 
 class tbstnode
@@ -275,15 +280,15 @@ class tbst
     end sub
 
     public sub preorderi()
-        dim stack(25), scnt : scnt = 0
+        dim stack : set stack = new tstack
         dim node : set node = m_root
-        do until node is nothing and scnt = 0
+        do until node is nothing and stack.isempty
             if not node is nothing then
                 wscript.stdout.write node.m_data & " "
-                set stack(scnt) = node : scnt = scnt+1  ' push node
+                stack.push node
                 set node = node.m_child(0)  ' left child
             else
-                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                set node = stack.pop
                 set node = node.m_child(1)  ' right child
             end if
         loop
@@ -304,14 +309,14 @@ class tbst
     end sub
 
     public sub inorderi()
-        dim stack(25), scnt : scnt = 0
+        dim stack : set stack = new tstack
         dim node : set node = m_root
-        do until node is nothing and scnt = 0
+        do until node is nothing and stack.isempty
             if not node is nothing then
-                set stack(scnt) = node : scnt = scnt+1  ' push node
+                stack.push node
                 set node = node.m_child(0)  ' left child
             else
-                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                set node = stack.pop
                 wscript.stdout.write node.m_data & " "
                 set node = node.m_child(1)  ' right child
             end if
@@ -333,20 +338,20 @@ class tbst
     end sub
 
     public sub postorderi()
-        dim stack(25), scnt : scnt = 0
+        dim stack : set stack = new tstack
         dim node, prev : set node = m_root : set prev = nothing
-        do until node is nothing and scnt = 0
+        do until node is nothing and stack.isempty
             if not node is nothing then
-                set stack(scnt) = node : scnt = scnt+1  ' push node
+                stack.push node
                 set node = node.m_child(0)  ' left child
             else
-                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                set node = stack.pop
                 if node.m_child(1) is nothing or node.m_child(1) is prev then
                     wscript.stdout.write node.m_data & " "
                     set prev = node
                     set node = nothing
                 else
-                    set stack(scnt) = node : scnt = scnt+1  ' push node
+                    stack.push node
                     set node = node.m_child(1)  ' right child
                 end if
             end if
@@ -355,18 +360,18 @@ class tbst
     end sub
 
     public sub levelorderi()
-        dim queue(25), qhead, qtail, qcnt : qhead = 0 : qtail = -1 : qcnt = 0
+        dim queue : set queue = new tqueue
         if not m_root is nothing then
-            qtail = (qtail+1) mod 25 : set queue(qtail) = m_root : qcnt = qcnt+1    ' enqueue root
+            queue.enqueue m_root
         end if
-        do until qcnt = 0
-            dim node : set node = queue(qhead) : qhead = (qhead+1) mod 25 : qcnt = qcnt-1   ' dequeue
+        do until queue.isempty
+            dim node : set node = queue.dequeue
             wscript.stdout.write node.m_data & " "
             if not node.m_child(0) is nothing then
-                qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_child(0) : qcnt = qcnt+1    ' enqueue left child
+                queue.enqueue node.m_child(0)
             end if
             if not node.m_child(1) is nothing then
-                qtail = (qtail+1) mod 25 : set queue(qtail) = node.m_child(1) : qcnt = qcnt+1    ' enqueue right child
+                queue.enqueue node.m_child(1)
             end if
         loop
         wscript.stdout.writeline
@@ -392,16 +397,16 @@ class tbst
     end function
 
     public function heighti()
-        dim stack(25), scnt : scnt = 0
+        dim stack : set stack = new tstack
         dim node, prev : set node = m_root : set prev = nothing
         dim hcnt, hmax : hcnt = 0 : hmax = 0
-        do until node is nothing and scnt = 0
+        do until node is nothing and stack.isempty
             if not node is nothing then
-                set stack(scnt) = node : scnt = scnt+1  ' push node
+                stack.push node
                 hcnt = hcnt+1
                 set node = node.m_child(0)  ' left child
             else
-                scnt = scnt-1 : set node = stack(scnt)  ' pop node
+                set node = stack.pop
                 if node.m_child(1) is nothing or node.m_child(1) is prev then
                     if hcnt > hmax then
                         hmax = hcnt
@@ -410,7 +415,7 @@ class tbst
                     set prev = node
                     set node = nothing
                 else
-                    set stack(scnt) = node : scnt = scnt+1  ' push node
+                    stack.push node
                     set node = node.m_child(1)  ' right child
                 end if
             end if
