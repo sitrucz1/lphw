@@ -433,19 +433,19 @@ class tbst
         if not m_root is nothing then
             queue.enqueue m_root
         end if
-        dim lcnt, hcnt : lcnt = queue.length : hcnt = 0
+        dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
         do until queue.isempty
             dim node : set node = queue.dequeue
             if not node.m_child(0) is nothing then
-                queue.enqueue node.m_child(0)
+                queue.enqueue node.m_child(0)   ' left child
             end if
             if not node.m_child(1) is nothing then
-                queue.enqueue node.m_child(1)
+                queue.enqueue node.m_child(1)   ' right child
             end if
             lcnt = lcnt-1
-            if lcnt = 0 then
+            if lcnt = 0 then        ' all done with current level
                 hcnt = hcnt+1
-                lcnt = queue.length
+                lcnt = queue.length ' set level count to next level size
             end if
         loop
         heightiq = hcnt

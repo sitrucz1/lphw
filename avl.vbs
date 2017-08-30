@@ -3,17 +3,13 @@ option explicit
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
     dim tree : set tree = new tavl
-    tree.avlputi(3)
-    tree.avlputi(2)
-    tree.avlputi(1)
+    tree.avlputr(3)
+    tree.avlputr(2)
+    tree.avlputr(1)
     tree.preorderi
     tree.print
     wscript.echo tree.isavl
-    set tree.m_root = tree.rotate(tree.m_root, 1)
-    tree.preorderi
-    tree.print
-    wscript.echo tree.isavl
-    ' wscript.quit
+    wscript.quit
 
     set tree.m_root = (new tavlnode).init(5)
     set tree.m_root.m_child(0) = (new tavlnode).init(3)
@@ -208,11 +204,12 @@ class tavl
     end function
 
     public function avlputr(byval data)
-        set m_root = avlputitemr(m_root, data)
+        dim done : done = false
+        set m_root = avlputitemr(m_root, data, done)
         set avlputr = m_root
     end function
 
-    private function avlputitemr(byval node, byval data)
+    private function avlputitemr(byval node, byval data, byref done)
         if node is nothing then
             set node = (new tavlnode).init(data)
             set avlputitemr = node
@@ -220,7 +217,45 @@ class tavl
             set avlputitemr = node
         else
             dim way : way = (node.m_data < data) and 1
-            set node.m_child(way) = avlputitemr(node.m_child(way), data)
+            set node.m_child(way) = avlputitemr(node.m_child(way), data, done)
+            ' rebalance
+            if not done then
+                if way = 0 then
+                    node.m_bal = node.m_bal-1
+                else
+                    node.m_bal = node.m_bal+1
+                end if
+                if node.m_bal = 0 then
+                    done = true
+                elseif node.m_bal = 2 or node.m_bal = -2 then
+                    dim bal
+                    if way = 0 then
+                        bal = -1
+                    else
+                        bal = 1
+                    end if
+                    if bal = node.m_child(way).m_bal then  ' single rotation
+                        set node = rotate(node, way xor 1)
+                        node.m_bal = 0 : node.m_child(way xor 1).m_bal = 0
+                    else ' double rotation
+                        set node.m_child(way) = rotate(node.m_child(way), way)
+                        set node = rotate(node, way xor 1)
+                        ' update balances 3 conditions
+                        if bal = node.m_bal then
+                            node.m_child(way xor 1) = -bal
+                            node.m_child(way) = 0
+                        elseif bal = -zchild.m_bal then
+                            node.m_child(way xor 1) = 0
+                            node.m_child(way) = bal
+                        else ' 0
+                            node.m_child(way xor 1) = 0
+                            node.m_child(way) = 0
+                        end if
+                        node.m_bal = 0
+                    end if
+                    done = true
+                end if
+            end if
             set avlputitemr = node
         end if
     end function
@@ -471,19 +506,19 @@ class tavl
         if not m_root is nothing then
             queue.enqueue m_root
         end if
-        dim lcnt, hcnt : lcnt = queue.length : hcnt = 0
+        dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
         do until queue.isempty
             dim node : set node = queue.dequeue
             if not node.m_child(0) is nothing then
-                queue.enqueue node.m_child(0)
+                queue.enqueue node.m_child(0)   ' left child
             end if
             if not node.m_child(1) is nothing then
-                queue.enqueue node.m_child(1)
+                queue.enqueue node.m_child(1)   ' right child
             end if
             lcnt = lcnt-1
-            if lcnt = 0 then
+            if lcnt = 0 then        ' all done with current level
                 hcnt = hcnt+1
-                lcnt = queue.length
+                lcnt = queue.length ' set level count to next level size
             end if
         loop
         heightiq = hcnt
@@ -504,8 +539,8 @@ class tavl
             if not node.m_child(1) is nothing then
                 queue.enqueue node.m_child(1)   ' queue right child
             end if
-            lcnt = lcnt-1       ' reduce level count
-            if lcnt = 0 then    ' level is complete
+            lcnt = lcnt-1
+            if lcnt = 0 then        ' level is complete
                 wscript.stdout.writeline
                 lcnt = queue.length ' reset level count to number of nodes in next level
             end if
