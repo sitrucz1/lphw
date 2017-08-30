@@ -35,6 +35,7 @@ sub main()
     tree.levelorderi
     wscript.echo tree.heightr
     wscript.echo tree.heighti
+    wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
     if tree.bstfindr(7) is nothing then
         wscript.echo "not found"
@@ -425,6 +426,29 @@ class tbst
             end if
         loop
         heighti = hmax
+    end function
+
+    public function heightiq()
+        dim queue : set queue = new tqueue
+        if not m_root is nothing then
+            queue.enqueue m_root
+        end if
+        dim lcnt, hcnt : lcnt = queue.length : hcnt = 0
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            if not node.m_child(0) is nothing then
+                queue.enqueue node.m_child(0)
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)
+            end if
+            lcnt = lcnt-1
+            if lcnt = 0 then
+                hcnt = hcnt+1
+                lcnt = queue.length
+            end if
+        loop
+        heightiq = hcnt
     end function
 
 end class

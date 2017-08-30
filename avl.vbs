@@ -7,11 +7,13 @@ sub main()
     tree.avlputi(2)
     tree.avlputi(1)
     tree.preorderi
+    tree.print
     wscript.echo tree.isavl
     set tree.m_root = tree.rotate(tree.m_root, 1)
     tree.preorderi
+    tree.print
     wscript.echo tree.isavl
-    wscript.quit
+    ' wscript.quit
 
     set tree.m_root = (new tavlnode).init(5)
     set tree.m_root.m_child(0) = (new tavlnode).init(3)
@@ -25,6 +27,7 @@ sub main()
     set tree.m_root.m_child(1).m_child(1).m_child(0).m_child(1) = (new tavlnode).init(9)
     set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1) = (new tavlnode).init(18)
     set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1).m_child(1) = (new tavlnode).init(19)
+    tree.print
     '      5
     '    /   \
     '   3     7
@@ -45,6 +48,7 @@ sub main()
     tree.levelorderi
     wscript.echo tree.heightr
     wscript.echo tree.heighti
+    wscript.echo tree.heightiq
     wscript.echo tree.isavl
     if tree.avlfindr(7) is nothing then
         wscript.echo "not found"
@@ -461,6 +465,53 @@ class tavl
         loop
         heighti = hmax
     end function
+
+    public function heightiq()
+        dim queue : set queue = new tqueue
+        if not m_root is nothing then
+            queue.enqueue m_root
+        end if
+        dim lcnt, hcnt : lcnt = queue.length : hcnt = 0
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            if not node.m_child(0) is nothing then
+                queue.enqueue node.m_child(0)
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)
+            end if
+            lcnt = lcnt-1
+            if lcnt = 0 then
+                hcnt = hcnt+1
+                lcnt = queue.length
+            end if
+        loop
+        heightiq = hcnt
+    end function
+
+    public sub print()
+        dim queue : set queue = new tqueue
+        if not m_root is nothing then
+            queue.enqueue m_root
+        end if
+        dim lcnt : lcnt = queue.length  ' set number of nodes at current level
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            wscript.stdout.write node.m_data & "," & node.m_bal & " "
+            if not node.m_child(0) is nothing then
+                queue.enqueue node.m_child(0)   ' queue left child
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)   ' queue right child
+            end if
+            lcnt = lcnt-1       ' reduce level count
+            if lcnt = 0 then    ' level is complete
+                wscript.stdout.writeline
+                lcnt = queue.length ' reset level count to number of nodes in next level
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
 end class
 
