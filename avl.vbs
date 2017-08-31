@@ -3,12 +3,14 @@ option explicit
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
     dim tree : set tree = new tavl
-    tree.avlputr(3)
-    tree.avlputr(2)
-    tree.avlputr(1)
-    tree.preorderi
+    dim i : i = 0
+    randomize timer
+    do
+        i = i+1
+        dim j : j = int(rnd*1000)
+        tree.avlputi(j)
+    loop until i > 1000 or not tree.isavl
     tree.print
-    wscript.echo tree.isavl
     wscript.quit
 
     set tree.m_root = (new tavlnode).init(5)
@@ -214,6 +216,7 @@ class tavl
             set node = (new tavlnode).init(data)
             set avlputitemr = node
         elseif node.m_data = data then
+            done = true
             set avlputitemr = node
         else
             dim way : way = (node.m_data < data) and 1
@@ -249,21 +252,21 @@ class tavl
         else ' double rotation
             set node.m_child(way) = rotate(node.m_child(way), way)
             set node = rotate(node, way xor 1)
-            set node = adjustbal(node, bal)
+            set node = adjustbal(node, way, bal)
         end if
         set putitembal = node
     end function
 
-    private function adjustbal(byval node, byval bal)
+    private function adjustbal(byval node, byval way, byval bal)
         if bal = node.m_bal then
-            node.m_child(way xor 1) = -bal
-            node.m_child(way) = 0
+            node.m_child(way xor 1).m_bal = -bal
+            node.m_child(way).m_bal = 0
         elseif bal = -node.m_bal then
-            node.m_child(way xor 1) = 0
-            node.m_child(way) = bal
+            node.m_child(way xor 1).m_bal = 0
+            node.m_child(way).m_bal = bal
         else ' 0
-            node.m_child(way xor 1) = 0
-            node.m_child(way) = 0
+            node.m_child(way xor 1).m_bal = 0
+            node.m_child(way).m_bal = 0
         end if
         node.m_bal = 0
         set adjustbal = node
@@ -271,10 +274,15 @@ class tavl
 
     public function avlputi(byval data)
         dim node, parent, way : set node = m_root : set parent = nothing
+        dim critnode, pcritnode : set critnode = m_root : set pcritnode = nothing
         do until node is nothing
             if node.m_data = data then
                 set avlputi = node
                 exit function
+            end if
+            if node.m_bal <> 0 then
+                set critnode = node
+                set pcritnode = parent
             end if
             set parent = node
             way = (node.m_data < data) and 1
@@ -285,6 +293,27 @@ class tavl
             set m_root = node
         else
             set parent.m_child(way) = node
+            ' rebalance
+            dim n : set n = critnode
+            do while not n is node
+                way = (n.m_data < data) and 1
+                if way = 0 then
+                    n.m_bal = n.m_bal-1
+                else
+                    n.m_bal = n.m_bal+1
+                end if
+                set n = n.m_child(way)
+            loop
+            if critnode.m_bal = 2 or critnode.m_bal = -2 then   ' rotation is needed
+                way = (critnode.m_data < data) and 1
+                set critnode = putitembal(critnode, way)
+                if pcritnode is nothing then
+                    set m_root = critnode
+                else
+                    way = (pcritnode.m_data < data) and 1
+                    set pcritnode.m_child(way) = critnode
+                end if
+            end if
         end if
         set avlputi = node
     end function
