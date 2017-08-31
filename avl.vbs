@@ -150,10 +150,10 @@ class tavl
         if node is nothing then
             isavlnode = 0
         elseif isless(node, node.m_child(0)) or isless(node.m_child(1), node) then
-            wscript.echo "ERROR: not a BST"
+            wscript.echo "ERROR: not a BST", node.m_data, node.m_bal
             isavlnode = -1
         elseif node.m_bal < -1 or node.m_bal > 1 then
-            wscript.echo "ERROR: node balance is out of range"
+            wscript.echo "ERROR: node balance is out of range", node.m_data, node.m_bal
             isavlnode = -1
         else
             dim lh : lh = isavlnode(node.m_child(0))
@@ -227,37 +227,46 @@ class tavl
                 end if
                 if node.m_bal = 0 then
                     done = true
-                elseif node.m_bal = 2 or node.m_bal = -2 then
-                    dim bal
-                    if way = 0 then
-                        bal = -1
-                    else
-                        bal = 1
-                    end if
-                    if bal = node.m_child(way).m_bal then  ' single rotation
-                        set node = rotate(node, way xor 1)
-                        node.m_bal = 0 : node.m_child(way xor 1).m_bal = 0
-                    else ' double rotation
-                        set node.m_child(way) = rotate(node.m_child(way), way)
-                        set node = rotate(node, way xor 1)
-                        ' update balances 3 conditions
-                        if bal = node.m_bal then
-                            node.m_child(way xor 1) = -bal
-                            node.m_child(way) = 0
-                        elseif bal = -zchild.m_bal then
-                            node.m_child(way xor 1) = 0
-                            node.m_child(way) = bal
-                        else ' 0
-                            node.m_child(way xor 1) = 0
-                            node.m_child(way) = 0
-                        end if
-                        node.m_bal = 0
-                    end if
+                elseif node.m_bal = 2 or node.m_bal = -2 then   ' rotation is needed
+                    set node = putitembal(node, way)
                     done = true
                 end if
             end if
             set avlputitemr = node
         end if
+    end function
+
+    private function putitembal(byval node, byval way)
+        dim bal
+        if way = 0 then
+            bal = -1
+        else
+            bal = 1
+        end if
+        if bal = node.m_child(way).m_bal then  ' single rotation
+            set node = rotate(node, way xor 1)
+            node.m_bal = 0 : node.m_child(way xor 1).m_bal = 0
+        else ' double rotation
+            set node.m_child(way) = rotate(node.m_child(way), way)
+            set node = rotate(node, way xor 1)
+            set node = adjustbal(node, bal)
+        end if
+        set putitembal = node
+    end function
+
+    private function adjustbal(byval node, byval bal)
+        if bal = node.m_bal then
+            node.m_child(way xor 1) = -bal
+            node.m_child(way) = 0
+        elseif bal = -node.m_bal then
+            node.m_child(way xor 1) = 0
+            node.m_child(way) = bal
+        else ' 0
+            node.m_child(way xor 1) = 0
+            node.m_child(way) = 0
+        end if
+        node.m_bal = 0
+        set adjustbal = node
     end function
 
     public function avlputi(byval data)
