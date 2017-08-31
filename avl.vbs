@@ -3,12 +3,16 @@ option explicit
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
     dim tree : set tree = new tavl
-    tree.avlputr(3)
-    tree.avlputr(2)
-    tree.avlputr(1)
-    tree.preorderi
-    tree.print
-    wscript.echo tree.isavl
+    dim i
+    randomize timer
+    for i = 1 to 100
+        dim j : j = int(rnd*100)
+        tree.avlputr(j)
+        tree.print
+        if not tree.isavl then
+            exit for
+        end if
+    next
     wscript.quit
 
     set tree.m_root = (new tavlnode).init(5)
@@ -214,6 +218,7 @@ class tavl
             set node = (new tavlnode).init(data)
             set avlputitemr = node
         elseif node.m_data = data then
+            done = true
             set avlputitemr = node
         else
             dim way : way = (node.m_data < data) and 1
@@ -242,14 +247,14 @@ class tavl
                         set node = rotate(node, way xor 1)
                         ' update balances 3 conditions
                         if bal = node.m_bal then
-                            node.m_child(way xor 1) = -bal
-                            node.m_child(way) = 0
-                        elseif bal = -zchild.m_bal then
-                            node.m_child(way xor 1) = 0
-                            node.m_child(way) = bal
+                            node.m_child(way xor 1).m_bal = -bal
+                            node.m_child(way).m_bal = 0
+                        elseif bal = -node.m_bal then
+                            node.m_child(way xor 1).m_bal = 0
+                            node.m_child(way).m_bal = bal
                         else ' 0
-                            node.m_child(way xor 1) = 0
-                            node.m_child(way) = 0
+                            node.m_child(way xor 1).m_bal = 0
+                            node.m_child(way).m_bal = 0
                         end if
                         node.m_bal = 0
                     end if
