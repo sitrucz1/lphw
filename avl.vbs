@@ -10,6 +10,22 @@ sub main()
         dim j : j = int(rnd*1000)
         tree.avlputi(j)
     loop until i > 1000 or not tree.isavl
+    ' tree.avlputi(91)
+    ' tree.avlputi(23)
+    ' tree.avlputi(99)
+    ' tree.avlputi(33)
+    ' tree.avlputi(17)
+    ' tree.avlputi(80)
+    ' tree.avlputi(7)
+    tree.print
+    wscript.echo "inserting done"
+    ' wscript.quit
+
+    do until tree.isempty or not tree.isavl
+        wscript.echo "Deleting => ", tree.m_root.m_data
+        tree.avldeleter(tree.m_root.m_data)
+        ' tree.print
+    loop
     tree.print
     wscript.quit
 
@@ -68,6 +84,7 @@ sub main()
     else
         wscript.echo "found"
     end if
+
     set tree = nothing
     set tree = new tavl
     tree.avlputr(5)
@@ -76,12 +93,18 @@ sub main()
     tree.avlputr(2)
     tree.avlputr(7)
     tree.avlputr(7)
-    tree.levelorderi
+    tree.avlputr(10)
+    ' tree.levelorderi
+    tree.print
     tree.avldeleter(2)
-    tree.levelorderi
+    ' tree.levelorderi
+    tree.print
     tree.avldeleter(5)
-    tree.levelorderi
+    ' tree.levelorderi
+    tree.print
     wscript.echo tree.isavl
+    wscript.quit
+
     set tree = nothing
     set tree = new tavl
     tree.avlputi(5)
@@ -142,6 +165,10 @@ class tavl
         else
             max = b
         end if
+    end function
+
+    public function isempty()
+        isempty = (m_root is nothing)
     end function
 
     public function isavl()
@@ -252,12 +279,58 @@ class tavl
         else ' double rotation
             set node.m_child(way) = rotate(node.m_child(way), way)
             set node = rotate(node, way xor 1)
-            set node = adjustbal(node, way, bal)
+            set node = adjustbal(node, way)
         end if
         set putitembal = node
     end function
 
-    private function adjustbal(byval node, byval way, byval bal)
+    private function deleteitembal(byval node, byval way, byref done)
+        dim bal
+        if done then
+            set deleteitembal = node
+            exit function
+        end if
+        if way = 0 then
+            node.m_bal = node.m_bal+1
+            bal = -1
+        else
+            node.m_bal = node.m_bal-1
+            bal = 1
+        end if
+        wscript.echo "node, nodebal, way => ", node.m_data, node.m_bal, way
+        if node.m_bal = -1 or node.m_bal = 1 then
+            done = true
+        elseif node.m_bal = -2 or node.m_bal = 2 then
+            wscript.echo "bal => ", bal
+            if bal <> node.m_child(way xor 1).m_bal then  ' single rotation
+                wscript.echo "* single rotate => ", node.m_data, way
+                set node = rotate(node, way)
+                if node.m_bal = 0 then
+                    node.m_bal = bal
+                    node.m_child(way).m_bal = -bal
+                    done = true ' b/c node balance <> 0
+                else
+                    node.m_bal = 0
+                    node.m_child(way).m_bal = 0
+                end if
+            else ' double rotation
+                wscript.echo "** double rotate => ", node.m_data, way
+                set node.m_child(way xor 1) = rotate(node.m_child(way xor 1), way xor 1)
+                set node = rotate(node, way)
+                set node = adjustbal(node, way)
+            end if
+        end if
+        set deleteitembal = node
+    end function
+
+    private function adjustbal(byval node, byval way)
+        dim bal
+        if way = 0 then
+            bal = -1
+        else
+            bal = 1
+        end if
+        wscript.echo "adjustbal => ", bal, node.m_bal
         if bal = node.m_bal then
             node.m_child(way xor 1).m_bal = -bal
             node.m_child(way).m_bal = 0
@@ -319,16 +392,19 @@ class tavl
     end function
 
     public function avldeleter(byval data)
-        set m_root = avldeleteitemr(m_root, data)
+        dim done : done = false
+        set m_root = avldeleteitemr(m_root, data, done)
         set avldeleter = m_root
     end function
 
-    private function avldeleteitemr(byval node, byval data)
+    private function avldeleteitemr(byval node, byval data, byref done)
         if node is nothing then
+            done = true
             set avldeleteitemr = node
         elseif node.m_data <> data then
             dim way : way = (node.m_data < data) and 1
-            set node.m_child(way) = avldeleteitemr(node.m_child(way), data)
+            set node.m_child(way) = avldeleteitemr(node.m_child(way), data, done)
+            set node = deleteitembal(node, way, done)
             set avldeleteitemr = node
         else ' found it
             if node.m_child(0) is nothing then  ' one child
@@ -338,10 +414,12 @@ class tavl
             else ' 2 children
                 dim succ : set succ = node.m_child(1)
                 do until succ.m_child(0) is nothing
-                    set succ = succ.m_next(0)
+                    set succ = succ.m_child(0)
                 loop
                 node.m_data = succ.m_data
-                set node.m_child(1) = avldeleteitemr(node.m_child(1), succ.m_data)
+                way = 1
+                set node.m_child(way) = avldeleteitemr(node.m_child(way), succ.m_data, done)
+                set node = deleteitembal(node, way, done)
                 set avldeleteitemr = node
             end if
         end if
