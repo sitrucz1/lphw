@@ -13,7 +13,7 @@ def main():
     shuffle(arr)
 
     print(arr)
-    qsort2(arr, 0, len(arr)-1)
+    qsort(arr, 0, len(arr)-1)
     print(arr)
 
 def insertsort(arr, left, right):
@@ -31,6 +31,7 @@ def qsort(arr, left, right):
     Hoare's partition quicksort scheme with median of three and tail
     recursion elimination
     """
+    print(left, right)
     # pylint: disable=too-many-branches
     print(left, right)
     while left < right:
