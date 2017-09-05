@@ -7,9 +7,9 @@ sub main()
     randomize timer
     do
         i = i+1
-        dim j : j = int(rnd*1000)
+        dim j : j = int(rnd*100)
         tree.avlputi(j)
-    loop until i > 1000 or not tree.isavl
+    loop until i > 10 or not tree.isavl
     ' tree.avlputi(91)
     ' tree.avlputi(23)
     ' tree.avlputi(99)
@@ -167,6 +167,14 @@ class tavl
         end if
     end function
 
+    private function iff(condition, a, b)
+        if condition then
+            iff = a
+        else
+            iff = b
+        end if
+    end function
+
     public function isempty()
         isempty = (m_root is nothing)
     end function
@@ -250,11 +258,7 @@ class tavl
             set node.m_child(way) = avlputitemr(node.m_child(way), data, done)
             ' rebalance
             if not done then
-                if way = 0 then
-                    node.m_bal = node.m_bal-1
-                else
-                    node.m_bal = node.m_bal+1
-                end if
+                node.m_bal = node.m_bal + iif(way = 0, -1, 1)
                 if node.m_bal = 0 then
                     done = true
                 elseif node.m_bal = 2 or node.m_bal = -2 then   ' rotation is needed
@@ -267,12 +271,7 @@ class tavl
     end function
 
     private function putitembal(byval node, byval way)
-        dim bal
-        if way = 0 then
-            bal = -1
-        else
-            bal = 1
-        end if
+        dim bal : bal = iff(way = 0, -1, 1)
         if bal = node.m_child(way).m_bal then  ' single rotation
             set node = rotate(node, way xor 1)
             node.m_bal = 0 : node.m_child(way xor 1).m_bal = 0
