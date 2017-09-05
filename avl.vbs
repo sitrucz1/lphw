@@ -9,7 +9,7 @@ sub main()
         i = i+1
         dim j : j = int(rnd*100)
         tree.avlputi(j)
-    loop until i > 10 or not tree.isavl
+    loop until i > 50 or not tree.isavl
     ' tree.avlputi(91)
     ' tree.avlputi(23)
     ' tree.avlputi(99)
@@ -23,7 +23,7 @@ sub main()
 
     do until tree.isempty or not tree.isavl
         wscript.echo "Deleting => ", tree.m_root.m_data
-        tree.avldeleter(tree.m_root.m_data)
+        tree.avldeletei(tree.m_root.m_data)
         ' tree.print
     loop
     tree.print
@@ -136,6 +136,19 @@ class tavlnode
         m_bal = 0
         set m_child(0) = nothing
         set m_child(1) = nothing
+        set init = me
+    end function
+
+end class
+
+class tavlstacknode
+
+    public m_data
+    public m_way
+
+    public function init(byval data, byval way)
+        set m_data = data
+        m_way = way
         set init = me
     end function
 
@@ -284,22 +297,16 @@ class tavl
     end function
 
     private function deleteitembal(byval node, byval way, byref done)
-        dim bal
         if done then
             set deleteitembal = node
             exit function
         end if
-        if way = 0 then
-            node.m_bal = node.m_bal+1
-            bal = -1
-        else
-            node.m_bal = node.m_bal-1
-            bal = 1
-        end if
+        node.m_bal = node.m_bal + iff(way = 0, 1, -1)
         wscript.echo "node, nodebal, way => ", node.m_data, node.m_bal, way
         if node.m_bal = -1 or node.m_bal = 1 then
             done = true
         elseif node.m_bal = -2 or node.m_bal = 2 then
+            dim bal : bal = iff(way = 0, -1, 1)
             wscript.echo "bal => ", bal
             if bal <> node.m_child(way xor 1).m_bal then  ' single rotation
                 wscript.echo "* single rotate => ", node.m_data, way
@@ -323,12 +330,7 @@ class tavl
     end function
 
     private function adjustbal(byval node, byval way)
-        dim bal
-        if way = 0 then
-            bal = -1
-        else
-            bal = 1
-        end if
+        dim bal : bal = iff(way = 0, -1, 1)
         wscript.echo "adjustbal => ", bal, node.m_bal
         if bal = node.m_bal then
             node.m_child(way xor 1).m_bal = -bal
@@ -369,11 +371,7 @@ class tavl
             dim n : set n = critnode
             do while not n is node
                 way = (n.m_data < data) and 1
-                if way = 0 then
-                    n.m_bal = n.m_bal-1
-                else
-                    n.m_bal = n.m_bal+1
-                end if
+                n.m_bal = n.m_bal + iff(way = 0, -1, 1)
                 set n = n.m_child(way)
             loop
             if critnode.m_bal = 2 or critnode.m_bal = -2 then   ' rotation is needed
@@ -426,10 +424,13 @@ class tavl
 
     public function avldeletei(byval data)
         dim node, parent, q, way : set node = m_root : set parent = nothing
+        dim stack, stknode : set stack = new tstack
         do until node is nothing
             if node.m_data <> data then
                 set parent = node
                 way = (node.m_data < data) and 1
+                set stknode = (new tavlstacknode).init(node, way)
+                stack.push stknode
                 set node = node.m_child(way)
             else
                 if node.m_child(0) is nothing then
@@ -441,12 +442,14 @@ class tavl
                 else
                     dim succ : set succ = node.m_child(1)
                     do until succ.m_child(0) is nothing
-                        set succ = succ.m_next(0)
+                        set succ = succ.m_child(0)
                     loop
                     node.m_data = succ.m_data
                     data = succ.m_data
                     set parent = node
                     way = 1 ' right child
+                    set stknode = (new tavlstacknode).init(node, way)
+                    stack.push stknode
                     set node = node.m_child(way)
                 end if
             end if
@@ -455,11 +458,26 @@ class tavl
             set avldeletei = node
             exit function
         end if
+        dim done : done = false
         if parent is nothing then
             set m_root = q
+            done = true
         else
             set parent.m_child(way) = q
         end if
+        do until done   ' update balances up to the root if necessary
+            set stknode = stack.pop
+            set stknode.m_data = deleteitembal(stknode.m_data, stknode.m_way, done)
+            ' notify the parent of possible rotations
+            if stack.isempty then
+                set m_root = stknode.m_data
+                done = true
+            else
+                dim pstknode : set pstknode = stack.pop
+                set pstknode.m_data.m_child(pstknode.m_way) = stknode.m_data
+                stack.push pstknode
+            end if
+        loop
         set avldeletei = node
     end function
 
