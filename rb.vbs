@@ -8,23 +8,20 @@ sub main()
     dim i, arr : arr = array(5,3,7,1,4,9,11,13,15,2)
     dim tree : set tree = new trbtree
     randomize timer
-    ' for i=1 to 5
-    '     tree.rbputi(cint(rnd*100))
+    for i=1 to 1000
+        tree.rbputi(cint(rnd*1000))
         ' tree.print
         ' if not tree.isrbtree then
         '     exit for
         ' end if
-    ' next
-    tree.rbputi(71)
-    tree.rbputi(32)
-    tree.rbputi(95)
-    tree.rbputi(23)
-    tree.rbputi(100)
+    next
     tree.print
     tree.isrbtree
-    do until tree.isempty or not tree.isrbtree
+    wscript.stdout.write "Press enter to continue..."
+    wscript.stdin.read(1)
+    do until tree.isempty ' or not tree.isrbtree
         tree.rbdeletei(tree.m_root.m_data)
-        tree.print
+        ' tree.print
     loop
 end sub
 
@@ -35,14 +32,15 @@ end sub
 class trbnode
 
     public m_data
-    public m_child(2) ' 0-left, 1-right, 2-parent
+    public m_child(1) '0-left, 1-right
+    public m_parent
     public m_color
 
     public function init(byval data)
         m_data = data
         set m_child(0) = nothing
         set m_child(1) = nothing
-        set m_child(2) = nothing
+        set m_parent = nothing
         m_color = red
         set init = me
     end function
@@ -179,17 +177,17 @@ class trbtree
         dim root : set root = node.m_child(way xor 1)
         set node.m_child(way xor 1) = root.m_child(way)
         if not root.m_child(way) is nothing then
-            set root.m_child(way).m_child(2) = node
+            set root.m_child(way).m_parent = node
         end if
-        set root.m_child(2) = node.m_child(2)
-        if node.m_child(2) is nothing then
+        set root.m_parent = node.m_parent
+        if node.m_parent is nothing then
             set m_root = root
         else
-            dim wayp : wayp = (node is node.m_child(2).m_child(1)) and 1
-            set node.m_child(2).m_child(wayp) = root
+            dim wayp : wayp = (node is node.m_parent.m_child(1)) and 1
+            set node.m_parent.m_child(wayp) = root
         end if
         set root.m_child(way) = node
-        set node.m_child(2) = root
+        set node.m_parent = root
         root.m_color = node.m_color
         node.m_color = red
         set rotate = root
@@ -222,21 +220,28 @@ class trbtree
         end if
         dim inserted : set inserted = node ' save a pointer to inserted node
         ' update the tree
-        set node.m_child(2) = parent
+        set node.m_parent = parent
         if parent is nothing then
             set m_root = node
         else
             set parent.m_child(way) = node
         end if
         ' rebalance
+        rbputifixup node
+        ' update root
+        m_root.m_color = black
+        set rbputi = inserted
+    end function
+
+    private sub rbputifixup(byval node)
+        dim parent : set parent = node.m_parent
         do while isred(parent)
-            dim gparent : set gparent = parent.m_child(2)
-            way = (gparent.m_child(1) is parent) and 1
+            dim gparent : set gparent = parent.m_parent
+            dim way : way = (gparent.m_child(1) is parent) and 1
             if isred(gparent.m_child(way xor 1)) then    ' case 1 - color flip
                 wscript.echo "Case 1 - Color Flip", gparent.m_data
                 colorflip gparent
-                set node = gparent
-                set parent = gparent.m_child(2)
+                set parent = gparent.m_parent
             else
                 if isred(parent.m_child(way xor 1)) then ' case 2 - rotate l/r or r/l
                     wscript.echo "Case 2 - Rotate", gparent.m_child(way).m_data, way
@@ -247,18 +252,15 @@ class trbtree
                 exit do
             end if
         loop
-        m_root.m_color = black
-        set rbputi = inserted
-    end function
+    end sub
 
     public function rbdeletei(byval data)
         wscript.echo "Deleting => ", data
-        dim node, parent, q, way : set node = m_root : set parent = nothing
+        dim node, q, way : set node = m_root
         do until node is nothing ' or node.m_data = data
             if node.m_data = data then
                 exit do
             end if
-            set parent = node
             way = (node.m_data < data) and 1
             set node = node.m_child(way)
         loop
@@ -266,11 +268,11 @@ class trbtree
             set rbdeletei = node
             exit function
         end if
-        if node.m_child(0) is nothing then
+        if node.m_child(0) is nothing then     ' one child or leaf
             set q = node.m_child(1)
-        elseif node.m_child(1) is nothing then
+        elseif node.m_child(1) is nothing then ' one child or leaf
             set q = node.m_child(0)
-        else
+        else                                   ' two children find successor
             dim succ : set succ = node.m_child(1)
             do until succ.m_child(0) is nothing
                 set succ = succ.m_child(0)
@@ -279,53 +281,62 @@ class trbtree
             set node = succ
             set q = node.m_child(1)
         end if
+        ' node is to be deleted and q is successor node
         if not node is m_root and not isred(node) and not isred(q) then
-            ' rebalance
-            dim db : set db = node
-            do
-                way = (db is db.m_child(2).m_child(1)) and 1
-                dim sib : set sib = db.m_child(2).m_child(way xor 1)
-                if isred(sib) then                                              ' case 1 - red sibling case reduction
-                    wscript.echo "case 1 - red sibling case reduction"
-                    set db.m_child(2) = rotate(db.m_child(2), way xor 1)
-                    set sib = db.m_child(2).m_child(way xor 1)
-                end if
-                if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
-                    wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree"
-                    sib.m_color = red
-                    if isred(db.m_child(2)) or db.m_child(2) is root then
-                        db.m_child(2).m_color = black
-                        exit do
-                    end if
-                    set db = db.m_child(2)
-                else
-                    if isred(sib.m_child(way)) then                             ' case 3 - lr/rl sibling red child - rotate
-                        wscript.echo "case 3 - lr/rl sibling red child - rotate"
-                        set db.m_child(2).m_child(way xor 1) = rotate(db.m_child(2).m_child(way xor 1), way xor 1)
-                    end if
-                    wscript.echo "case 4 - ll/rr sibling red child - rotate"
-                    set db.m_child(2) = rotate(db.m_child(2), way)              ' case 4 - ll/rr sibling red child - rotate
-                    db.m_child(2).m_child(0).m_color = black
-                    db.m_child(2).m_child(1).m_color = black
-                    exit do
-                end if
-            loop until false 
+            rbdeleteifixup node
         end if
-        if node.m_child(2) is nothing then
+        ' splice out node
+        if node.m_parent is nothing then
             set m_root = q
         else
-            way = (node is node.m_child(2).m_child(1)) and 1
-            set node.m_child(2).m_child(way) = q
+            way = (node is node.m_parent.m_child(1)) and 1
+            set node.m_parent.m_child(way) = q
         end if
+        ' update pointers
         if not q is nothing then
-            set q.m_child(2) = node.m_child(2)
+            set q.m_parent = node.m_parent
             q.m_color = black
         end if
+        ' update root
         if not m_root is nothing then
             m_root.m_color = black
         end if
         set rbdeletei = node
     end function
+
+    private sub rbdeleteifixup(byval node)
+        dim db : set db = node
+        do
+            dim parent : set parent = db.m_parent
+            dim way : way = (db is parent.m_child(1)) and 1
+            dim sib : set sib = parent.m_child(way xor 1)
+            if isred(sib) then                                              ' case 1 - red sibling case reduction
+                wscript.echo "case 1 - red sibling case reduction - rotate", parent.m_data, way
+                set parent = rotate(parent, way)
+                set parent = db.m_parent
+                set sib = parent.m_child(way xor 1)
+            end if
+            if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
+                wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", parent.m_data, way
+                sib.m_color = red
+                if isred(parent) or parent is m_root then
+                    parent.m_color = black
+                    exit do
+                end if
+                set db = parent
+            else
+                if isred(sib.m_child(way)) then                             ' case 3 - lr/rl sibling red child - rotate
+                    wscript.echo "case 3 - lr/rl sibling red child - rotate", parent.m_child(way xor 1).m_data, way xor 1
+                    set parent.m_child(way xor 1) = rotate(parent.m_child(way xor 1), way xor 1)
+                end if
+                wscript.echo "case 4 - ll/rr sibling red child - rotate", parent.m_data, way
+                set parent = rotate(parent, way)                            ' case 4 - ll/rr sibling red child - rotate
+                parent.m_child(0).m_color = black
+                parent.m_child(1).m_color = black
+                exit do
+            end if
+        loop until false
+    end sub
 
     public sub preorderr()
         preorderrnode(m_root)
