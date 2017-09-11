@@ -19,7 +19,7 @@ sub main()
     tree.isrbtree
     wscript.stdout.write "Press enter to continue..."
     wscript.stdin.read(1)
-    do until tree.isempty ' or not tree.isrbtree
+    do until tree.isempty or not tree.isrbtree
         tree.rbdeletei(tree.m_root.m_data)
         ' tree.print
     loop
@@ -91,7 +91,7 @@ class trbtree
 
     private function color2char(byval node)
         if node is nothing then
-            color2char = ""
+            color2char = "b"
         elseif isred(node) then
             color2char = "r"
         else
@@ -230,6 +230,7 @@ class trbtree
         rbputifixup node
         ' update root
         m_root.m_color = black
+        m_cnt = m_cnt+1
         set rbputi = inserted
     end function
 
@@ -301,6 +302,7 @@ class trbtree
         if not m_root is nothing then
             m_root.m_color = black
         end if
+        m_cnt = m_cnt-1
         set rbdeletei = node
     end function
 
@@ -496,9 +498,10 @@ class trbtree
 
     public sub levelorderi()
         dim queue : set queue = new tqueue
-        if not m_root is nothing then
-            queue.enqueue m_root
+        if m_root is nothing then
+            exit sub
         end if
+        queue.enqueue m_root
         do until queue.isempty
             dim node : set node = queue.dequeue
             wscript.stdout.write node.m_data & " "
@@ -556,9 +559,11 @@ class trbtree
 
     public function heightiq()
         dim queue : set queue = new tqueue
-        if not m_root is nothing then
-            queue.enqueue m_root
+        if m_root is nothing then
+            heightiq = 0
+            exit function
         end if
+        queue.enqueue m_root
         dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
         do until queue.isempty
             dim node : set node = queue.dequeue

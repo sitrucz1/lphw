@@ -436,9 +436,10 @@ class tbst
 
     public sub levelorderi()
         dim queue : set queue = new tqueue
-        if not m_root is nothing then
-            queue.enqueue m_root
+        if m_root is nothing then
+            exit sub
         end if
+        queue.enqueue m_root
         do until queue.isempty
             dim node : set node = queue.dequeue
             wscript.stdout.write node.m_data & " "
@@ -496,9 +497,11 @@ class tbst
 
     public function heightiq()
         dim queue : set queue = new tqueue
-        if not m_root is nothing then
-            queue.enqueue m_root
+        if m_root is nothing then
+            heightiq = 0
+            exit function
         end if
+        queue.enqueue m_root
         dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
         do until queue.isempty
             dim node : set node = queue.dequeue
