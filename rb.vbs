@@ -8,7 +8,7 @@ sub main()
     dim i, arr : arr = array(5,3,7,1,4,9,11,13,15,2)
     dim tree : set tree = new trbtree
     randomize timer
-    for i=1 to 1000
+    for i=1 to 20
         tree.rbputi(cint(rnd*1000))
         ' tree.print
         ' if not tree.isrbtree then
