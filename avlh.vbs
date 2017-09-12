@@ -1,3 +1,6 @@
+'
+' AVL Tree using height
+'
 option explicit
 
 sub main()
@@ -9,9 +12,15 @@ sub main()
         i = i+1
         dim j : j = int(rnd*100)
         tree.avlputr(j)
-        tree.print
-    loop until i > 9 or not tree.isavl
+        ' tree.print
+    loop until i > 10 or not tree.isavl
     tree.print
+    wscript.echo "Press ENTER to continue..."
+    wscript.stdin.read(1)
+    do
+        tree.avldeleter(tree.m_root.m_data)
+        tree.print
+    loop until tree.isempty or not tree.isavl
 end sub
 
 sub includefile(fspec)
@@ -21,12 +30,12 @@ end sub
 class tavlnode
 
     public m_data
-    public m_bal
+    public m_height
     public m_child(1)
 
     public function init(byval data)
         m_data = data
-        m_bal = 1
+        m_height = 1
         set m_child(0) = nothing
         set m_child(1) = nothing
         set init = me
@@ -60,11 +69,11 @@ class tavl
         end if
     end function
 
-    private function iff(condition, a, b)
+    private function iif(condition, a, b)
         if condition then
-            iff = a
+            iif = a
         else
-            iff = b
+            iif = b
         end if
     end function
 
@@ -76,7 +85,15 @@ class tavl
         if node is nothing then
             getnodeheight = 0
         else
-            getnodeheight = node.m_bal
+            getnodeheight = node.m_height
+        end if
+    end function
+
+    private function getbal(byval node)
+        if node is nothing then
+            getbal = 0
+        else
+            getbal = getnodeheight(node.m_child(1)) - getnodeheight(node.m_child(0))
         end if
     end function
 
@@ -84,7 +101,7 @@ class tavl
         if not node is nothing then
             dim lh : lh = getnodeheight(node.m_child(0))
             dim rh : rh = getnodeheight(node.m_child(1))
-            node.m_bal = 1+max(lh, rh)
+            node.m_height = 1+max(lh, rh)
         end if
     end sub
 
@@ -96,7 +113,7 @@ class tavl
         if node is nothing then
             isavlnode = 0
         elseif isless(node, node.m_child(0)) or isless(node.m_child(1), node) then
-            wscript.echo "ERROR: not a BST", node.m_data, node.m_bal
+            wscript.echo "ERROR: not a BST", node.m_data, node.m_height
             isavlnode = -1
         else
             dim lh : lh = isavlnode(node.m_child(0))
@@ -105,10 +122,10 @@ class tavl
             if lh = -1 or rh = -1 then
                 isavlnode = -1  ' an error above already trapped this dont echo
             elseif diff < -1 or diff > 1 then
-                wscript.echo "ERROR: left and right subtrees differ by more than 1", node.m_data, node.m_bal
+                wscript.echo "ERROR: left and right subtrees differ by more than 1", node.m_data, node.m_height
                 isavlnode = -1
-            elseif node.m_bal <> 1+max(lh, rh) then
-                wscript.echo "ERROR: node balance doesn't match heights", node.m_data, node.m_bal
+            elseif node.m_height <> 1+max(lh, rh) then
+                wscript.echo "ERROR: node balance doesn't match heights", node.m_data, node.m_height
                 isavlnode = -1
             else
                 isavlnode = 1 + max(lh, rh)
@@ -157,7 +174,7 @@ class tavl
             set node.m_child(way) = avlputitemr(node.m_child(way), data)
             ' rebalance
             setnodeheight node
-            dim bal : bal = getnodeheight(node.m_child(0)) - getnodeheight(node.m_child(1))
+            dim bal : bal = getbal(node)
             if bal = -2 or bal = 2 then
                 ' rotate
                 dim way2 : way2 = (node.m_child(way).m_data < data) and 1
@@ -173,19 +190,18 @@ class tavl
     end function
 
     public function avldeleter(byval data)
-        dim done : done = false
-        set m_root = avldeleteitemr(m_root, data, done)
+        wscript.echo "Deleting => ", data
+        set m_root = avldeleteitemr(m_root, data)
         set avldeleter = m_root
     end function
 
-    private function avldeleteitemr(byval node, byval data, byref done)
+    private function avldeleteitemr(byval node, byval data)
         if node is nothing then
-            done = true
             set avldeleteitemr = node
         elseif node.m_data <> data then
             dim way : way = (node.m_data < data) and 1
-            set node.m_child(way) = avldeleteitemr(node.m_child(way), data, done)
-            set node = deleteitembal(node, way, done)
+            set node.m_child(way) = avldeleteitemr(node.m_child(way), data)
+            set node = deleteitembal(node, way)
             set avldeleteitemr = node
         else ' found it
             if node.m_child(0) is nothing then  ' one child
@@ -199,11 +215,28 @@ class tavl
                 loop
                 node.m_data = succ.m_data
                 way = 1
-                set node.m_child(way) = avldeleteitemr(node.m_child(way), succ.m_data, done)
-                set node = deleteitembal(node, way, done)
+                set node.m_child(way) = avldeleteitemr(node.m_child(way), succ.m_data)
+                set node = deleteitembal(node, way)
                 set avldeleteitemr = node
             end if
         end if
+    end function
+
+    private function deleteitembal(byval node, byval way)
+        setnodeheight node
+        dim bal : bal = getbal(node)
+        if bal = -2 or bal = 2 then
+            dim w : set w = node.m_child(way xor 1)
+            dim nbal : nbal = iif(bal = -2, -1, 1)
+            dim wbal : wbal = getbal(w)
+            if nbal = -wbal then
+                wscript.echo "**rotate", node.m_child(way xor 1).m_data, way xor 1
+                set node.m_child(way xor 1) = rotate(node.m_child(way xor 1), way xor 1)
+            end if
+            wscript.echo "*rotate", node.m_data, way
+            set node = rotate(node, way)
+        end if
+        set deleteitembal = node
     end function
 
     public sub print()
@@ -215,7 +248,7 @@ class tavl
         dim lcnt : lcnt = queue.length  ' set number of nodes at current level
         do until queue.isempty
             dim node : set node = queue.dequeue
-            wscript.stdout.write node.m_data & "," & node.m_bal & " "
+            wscript.stdout.write node.m_data & "," & node.m_height & " "
             if not node.m_child(0) is nothing then
                 queue.enqueue node.m_child(0)   ' queue left child
             end if
