@@ -226,7 +226,7 @@ class tavl
         setnodeheight node
         dim bal : bal = getbal(node)
         if bal = -2 or bal = 2 then
-            dim w : set w = node.m_child(way xor 1)
+            dim w : set w = node.m_child(way xor 1) ' sibling
             dim nbal : nbal = iif(bal = -2, -1, 1)
             dim wbal : wbal = getbal(w)
             if nbal = -wbal then
