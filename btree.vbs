@@ -6,7 +6,7 @@ option explicit
 
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
-    dim btree : set btree = (new tbtree).init(3)
+    dim btree : set btree = (new tbtree).init(2)
 
     ' btree.m_root.m_key(0) = 4
     ' btree.m_root.m_cnt = 1
@@ -51,11 +51,12 @@ sub main()
     '       |1||3|   |5| |7| |9| |11 12|
 
     dim i
-    randomize timer
-    for i = 1 to 30
+    ' randomize timer
+    for i = 1 to 10
         btree.btput(i)
         ' btree.btput(int(rnd*100))
     next
+    btree.traverse
     btree.print
     btree.isbtree
 
@@ -71,33 +72,42 @@ sub main()
     ' btree.traverse
     ' wscript.quit
 
-    ' btree.btdelete(6)
-    ' btree.isbtree
-    ' btree.print
-    ' btree.btdelete(1)
-    ' btree.isbtree
-    ' btree.print
-    ' btree.btdelete(8)
-    ' btree.print
-    ' btree.btdelete(5)
-    ' btree.print
-    ' btree.btdelete(2)
-    ' btree.print
-    ' btree.btdelete(7)
-    ' btree.print
-    ' btree.btdelete(4)
-    ' btree.print
-    ' btree.btdelete(9)
-    ' btree.print
-    ' btree.btdelete(3)
-    ' btree.print
-    ' btree.btdelete(10)
-    ' btree.print
-    ' btree.isbtree
-    do until btree.isempty or not btree.isbtree
-        btree.btdelete(btree.m_root.m_key(0))
-        btree.print
-    loop
+    btree.btdelete(6)
+    btree.print
+    btree.isbtree
+    btree.btdelete(1)
+    btree.print
+    btree.isbtree
+    btree.btdelete(8)
+    btree.print
+    btree.isbtree
+    btree.btdelete(5)
+    btree.print
+    btree.isbtree
+    btree.btdelete(2)
+    btree.print
+    btree.isbtree
+    btree.btdelete(7)
+    btree.print
+    btree.isbtree
+    btree.btdelete(4)
+    btree.print
+    btree.isbtree
+    btree.btdelete(9)
+    btree.print
+    btree.isbtree
+    btree.btdelete(3)
+    btree.print
+    btree.isbtree
+    btree.btdelete(10)
+    btree.print
+    btree.isbtree
+
+    ' do until btree.isempty or not btree.isbtree
+    '     btree.btdelete(btree.m_root.m_key(0))
+    '     btree.print
+    ' loop
+
     btree.traverse
 
     ' if btree.btget(9) is nothing then
@@ -250,7 +260,7 @@ class tbtree
 
     private function btgetnode(byval node, byval data)
         dim i : i = 0
-        do while i < node.m_cnt
+        do while i < node.m_cnt ' and data > node.m_key(i)
             if data <= node.m_key(i) then
                 exit do
             end if
@@ -279,8 +289,8 @@ class tbtree
     end function
 
     private function btputnode(byval node, byval data)
-        dim i : i = 0
-        do while i < node.m_cnt
+        dim i, j : i = 0
+        do while i < node.m_cnt ' and data > node.m_key(i)
             if data <= node.m_key(i) then
                 exit do
             end if
@@ -289,7 +299,6 @@ class tbtree
         if nodematch(node, i, data) then
             set btputnode = node
         elseif node.m_leaf then ' do the insert
-            dim j
             for j = node.m_cnt-1 to i step -1
                 node.m_key(j+1) = node.m_key(j)
             next
@@ -313,38 +322,38 @@ class tbtree
     end function
 
     public sub splitnode(byref node, byval idx)
-        dim i, xnode, ynode
-        set xnode = node.m_link(idx)
-        set ynode = (new tbtreenode).init(m_degree)
+        dim i, child, sib
+        set child = node.m_link(idx)
+        set sib = (new tbtreenode).init(m_degree)
         wscript.echo "splitting..."
         ' Move nodes over in parent
         for i = node.m_cnt-1 to idx step -1
             node.m_key(i+1) = node.m_key(i)
         next
         ' Copy median of child to parent
-        node.m_key(idx) = xnode.m_key(m_degree-1)
-        ' Copy right split data to new node
+        node.m_key(idx) = child.m_key(m_degree-1)
+        ' Copy right split data to new sibling
         for i = 0 to m_degree-2
-            ynode.m_key(i) = xnode.m_key(i+m_degree)
+            sib.m_key(i) = child.m_key(i+m_degree)
         next
         ' Update leafs
-        ynode.m_leaf = xnode.m_leaf
+        sib.m_leaf = child.m_leaf
         ' Move links over in parent
         for i = node.m_cnt to idx+1 step -1
             set node.m_link(i+1) = node.m_link(i)
         next
         ' Point to new node
-        set node.m_link(idx+1) = ynode
-        ' Update ynode links
-        if not ynode.m_leaf then
+        set node.m_link(idx+1) = sib
+        ' Update sibling links
+        if not sib.m_leaf then
             for i = 0 to m_degree-1
-                set ynode.m_link(i) = xnode.m_link(i+m_degree)
+                set sib.m_link(i) = child.m_link(i+m_degree)
             next
         end if
         ' Update counts
         node.m_cnt = node.m_cnt+1
-        xnode.m_cnt = m_degree-1
-        ynode.m_cnt = m_degree-1
+        child.m_cnt = m_degree-1
+        sib.m_cnt = m_degree-1
     end sub
 
     public function btdelete(byval data)
@@ -359,7 +368,7 @@ class tbtree
     private function btdeletenode(byref node, byval data)
         wscript.echo "entering delete => ", node.m_key(0)
         dim i, j : i = 0
-        do while i < node.m_cnt
+        do while i < node.m_cnt ' and data > node.m_key(i)
             if data <= node.m_key(i) then
                 exit do
             end if
@@ -382,7 +391,6 @@ class tbtree
                 node.m_key(i) = successor(node, i)
                 set btdeletenode = btdeletenode(node.m_link(i+1), node.m_key(i))
             else
-                i = iif(i = node.m_cnt, i-1, i)
                 joinnode node, i
                 set btdeletenode = btdeletenode(node.m_link(i), data)
             end if
@@ -390,19 +398,17 @@ class tbtree
             set btdeletenode = nothing
         else ' keep searching
             wscript.echo "keep searching, not in current node...", node.m_key(iif(i = node.m_cnt, i-1, i)), i
-            if node.m_link(i).m_cnt < m_degree then
-                if canborrowleft(node, i) then ' dont have short-circuit boolean logic so had to write function
-                    borrowleft node, i
-                    set btdeletenode = btdeletenode(node.m_link(i), data)
-                elseif canborrowright(node, i) then
-                    borrowright node, i
-                    set btdeletenode = btdeletenode(node.m_link(i), data)
-                else
-                    i = iif(i = node.m_cnt, i-1, i)
-                    joinnode node, i
-                    set btdeletenode = btdeletenode(node.m_link(i), data)
-                end if
+            if node.m_link(i).m_cnt >= m_degree then
+                set btdeletenode = btdeletenode(node.m_link(i), data)
+            elseif canborrowleft(node, i) then ' dont have short-circuit boolean logic so had to write function
+                borrowleft node, i
+                set btdeletenode = btdeletenode(node.m_link(i), data)
+            elseif canborrowright(node, i) then
+                borrowright node, i
+                set btdeletenode = btdeletenode(node.m_link(i), data)
             else
+                i = iif(i = node.m_cnt, i-1, i)
+                joinnode node, i
                 set btdeletenode = btdeletenode(node.m_link(i), data)
             end if
         end if
