@@ -306,7 +306,9 @@ class tbtree
             node.m_cnt = node.m_cnt+1
             set btputnode = node
         else ' keep searching
-            if node.m_link(i).m_cnt = 2*m_degree-1 then
+            if node.m_link(i).m_cnt < 2*m_degree-1 then
+                set btputnode = btputnode(node.m_link(i), data)
+            else
                 splitnode node, i
                 ' since median of child came up to node we need to check if there's a match or i changes
                 if node.m_key(i) = data then
@@ -315,8 +317,6 @@ class tbtree
                     i = iif(data > node.m_key(i), i+1, i)
                     set btputnode = btputnode(node.m_link(i), data)
                 end if
-            else
-                set btputnode = btputnode(node.m_link(i), data)
             end if
         end if
     end function
