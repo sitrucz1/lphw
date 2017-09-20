@@ -6,7 +6,7 @@ option explicit
 
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
-    dim btree : set btree = (new tbtree).init(2)
+    dim btree : set btree = (new tbtree).init(3)
 
     ' btree.m_root.m_key(0) = 4
     ' btree.m_root.m_cnt = 1
@@ -259,13 +259,7 @@ class tbtree
     end function
 
     private function btgetnode(byval node, byval data)
-        dim i : i = 0
-        do while i < node.m_cnt ' and data > node.m_key(i)
-            if data <= node.m_key(i) then
-                exit do
-            end if
-            i = i+1
-        loop
+        dim i : i = keysearch(node, data)
         if nodematch(node, i, data) then
             set btgetnode = node
         elseif node.m_leaf then
@@ -289,21 +283,13 @@ class tbtree
     end function
 
     private function btputnode(byval node, byval data)
-        dim i, j : i = 0
-        do while i < node.m_cnt ' and data > node.m_key(i)
-            if data <= node.m_key(i) then
-                exit do
-            end if
-            i = i+1
-        loop
+        wscript.echo "entering btputnode...", node.m_key(0)
+        dim i : i = keysearch(node, data)
+        wscript.echo "keysearch is ", i
         if nodematch(node, i, data) then
             set btputnode = node
         elseif node.m_leaf then ' do the insert
-            for j = node.m_cnt-1 to i step -1
-                node.m_key(j+1) = node.m_key(j)
-            next
-            node.m_key(i) = data
-            node.m_cnt = node.m_cnt+1
+            keyput node, data, i
             set btputnode = node
         else ' keep searching
             if node.m_link(i).m_cnt < 2*m_degree-1 then
@@ -319,6 +305,26 @@ class tbtree
                 end if
             end if
         end if
+    end function
+
+    private sub keyput(byref node, byval data, byval idx)
+        dim i
+        for i = node.m_cnt-1 to idx step -1
+            node.m_key(i+1) = node.m_key(i)
+        next
+        node.m_key(idx) = data
+        node.m_cnt = node.m_cnt+1
+    end sub
+
+    private function keysearch(byval node, byval data)
+        dim i : i = 0
+        do while i < node.m_cnt ' and data > node.m_key(i)
+            if data <= node.m_key(i) then
+                exit do
+            end if
+            i = i+1
+        loop
+        keysearch = i
     end function
 
     public sub splitnode(byref node, byval idx)
@@ -367,21 +373,12 @@ class tbtree
 
     private function btdeletenode(byref node, byval data)
         wscript.echo "entering delete => ", node.m_key(0)
-        dim i, j : i = 0
-        do while i < node.m_cnt ' and data > node.m_key(i)
-            if data <= node.m_key(i) then
-                exit do
-            end if
-            i = i+1
-        loop
+        dim i : i = keysearch(node, data)
         if nodematch(node, i, data) then  ' found the node delete it
             wscript.echo "found node...", node.m_key(i), i
             if node.m_leaf then
                 wscript.echo "leaf node...", node.m_key(i), i
-                for j = i+1 to node.m_cnt-1
-                    node.m_key(j-1) = node.m_key(j)
-                next
-                node.m_cnt = node.m_cnt-1
+                keyremove node, i
                 wscript.echo "deleted!"
                 set btdeletenode = node
             elseif node.m_link(i).m_cnt >= m_degree then
@@ -413,6 +410,14 @@ class tbtree
             end if
         end if
     end function
+
+    private sub keyremove(byref node, byval idx)
+        dim i
+        for i = idx+1 to node.m_cnt-1
+            node.m_key(i-1) = node.m_key(i)
+        next
+        node.m_cnt = node.m_cnt-1
+    end sub
 
     private function predecessor(byval node, byval idx)
         wscript.echo "getting predecessor..."
