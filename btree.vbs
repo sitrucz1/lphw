@@ -242,11 +242,11 @@ class tbtree
         inrange = true
     end function
 
-    private function nodematch(byval node, byval index, byval data)
-        if index >= node.m_cnt then
+    private function nodematch(byval node, byval idx, byval data)
+        if idx >= node.m_cnt then
             nodematch = false
         else
-            nodematch = (node.m_key(index) = data)
+            nodematch = (node.m_key(idx) = data)
         end if
     end function
 
@@ -452,71 +452,71 @@ class tbtree
 
     public sub borrowleft(byref node, byval idx)
         wscript.echo "borrow left..."
-        dim i, idxnode, sibnode
-        set idxnode = node.m_link(idx)
-        set sibnode = node.m_link(idx-1)
-        for i = idxnode.m_cnt-1 to 0 step -1
-            idxnode.m_key(i+1) = idxnode.m_key(i)
+        dim i, child, sib
+        set child = node.m_link(idx)
+        set sib = node.m_link(idx-1)
+        for i = child.m_cnt-1 to 0 step -1
+            child.m_key(i+1) = child.m_key(i)
         next
-        idxnode.m_key(0) = node.m_key(idx-1)
-        node.m_key(idx-1) = sibnode.m_key(sibnode.m_cnt-1)
-        if not idxnode.m_leaf then
-            for i = idxnode.m_cnt to 0 step -1
-                set idxnode.m_link(i+1) = idxnode.m_link(i)
+        child.m_key(0) = node.m_key(idx-1)
+        node.m_key(idx-1) = sib.m_key(sib.m_cnt-1)
+        if not child.m_leaf then
+            for i = child.m_cnt to 0 step -1
+                set child.m_link(i+1) = child.m_link(i)
             next
-            set idxnode.m_link(0) = sibnode.m_link(sibnode.m_cnt)
+            set child.m_link(0) = sib.m_link(sib.m_cnt)
         end if
-        idxnode.m_cnt = idxnode.m_cnt+1
-        sibnode.m_cnt = sibnode.m_cnt-1
+        child.m_cnt = child.m_cnt+1
+        sib.m_cnt = sib.m_cnt-1
     end sub
 
     public sub borrowright(byref node, byval idx)
         wscript.echo "borrow right..."
-        dim i, idxnode, sibnode
-        set idxnode = node.m_link(idx)
-        set sibnode = node.m_link(idx+1)
-        idxnode.m_key(idxnode.m_cnt) = node.m_key(idx)
-        node.m_key(idx) = sibnode.m_key(0)
-        for i = 1 to sibnode.m_cnt-1
-            sibnode.m_key(i-1) = sibnode.m_key(i)
+        dim i, child, sib
+        set child = node.m_link(idx)
+        set sib = node.m_link(idx+1)
+        child.m_key(child.m_cnt) = node.m_key(idx)
+        node.m_key(idx) = sib.m_key(0)
+        for i = 1 to sib.m_cnt-1
+            sib.m_key(i-1) = sib.m_key(i)
         next
-        if not idxnode.m_leaf then
-            set idxnode.m_link(idxnode.m_cnt+1) = sibnode.m_link(0)
-            for i = 1 to sibnode.m_cnt
-                set sibnode.m_link(i-1) = sibnode.m_link(i)
+        if not child.m_leaf then
+            set child.m_link(child.m_cnt+1) = sib.m_link(0)
+            for i = 1 to sib.m_cnt
+                set sib.m_link(i-1) = sib.m_link(i)
             next
         end if
-        idxnode.m_cnt = idxnode.m_cnt+1
-        sibnode.m_cnt = sibnode.m_cnt-1
+        child.m_cnt = child.m_cnt+1
+        sib.m_cnt = sib.m_cnt-1
     end sub
 
     public sub joinnode(byref node, byval idx)
         wscript.echo "joining nodes...", node.m_key(idx), idx
-        dim i, idxnode, sibnode
-        set idxnode = node.m_link(idx)
-        set sibnode = node.m_link(idx+1)
+        dim i, child, sib
+        set child = node.m_link(idx)
+        set sib = node.m_link(idx+1)
         ' move median to child
-        idxnode.m_key(m_degree-1) = node.m_key(idx)
+        child.m_key(m_degree-1) = node.m_key(idx)
         ' move sib keys to child
-        for i = 0 to sibnode.m_cnt-1
-            idxnode.m_key(i+m_degree) = sibnode.m_key(i)
+        for i = 0 to sib.m_cnt-1
+            child.m_key(i+m_degree) = sib.m_key(i)
         next
         ' fill the gap in node due to median moving
         for i = idx to node.m_cnt-2
             node.m_key(i) = node.m_key(i+1)
         next
         ' update links
-        if not idxnode.m_leaf then
-            for i = 0 to sibnode.m_cnt
-                set idxnode.m_link(i+m_degree) = sibnode.m_link(i)
+        if not child.m_leaf then
+            for i = 0 to sib.m_cnt
+                set child.m_link(i+m_degree) = sib.m_link(i)
             next
         end if
-        set node.m_link(idx) = idxnode ' already points to idxnode but nice for readability
+        set node.m_link(idx) = child ' already points to child but nice for readability
         for i = idx+1 to node.m_cnt-1
             set node.m_link(i) = node.m_link(i+1)
         next
         ' update counts
-        idxnode.m_cnt = 2*m_degree-1
+        child.m_cnt = 2*m_degree-1
         node.m_cnt = node.m_cnt-1
         ' garbage collection frees nodes once nothing points to it
     end sub
