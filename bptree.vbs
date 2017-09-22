@@ -101,16 +101,14 @@ class tbpkeynode
 
     public m_key
     public m_link
-    public m_parent
     public m_leaf
     public m_cnt
 
     public function init(byval degree)
-        redim m_key(2*degree-2)  ' 0..2*degree-2
+        redim m_key(2*degree-1)  ' 0..2*degree-2
         redim m_link(2*degree-1) ' 0..2*degree-1
         m_leaf = false
         m_cnt = 0
-        set m_parent = nothing
         set init = me
     end function
 
@@ -120,24 +118,35 @@ class tbpleafnode
 
     public m_key
     public m_data
-    public m_parent
     public m_leaf
     public m_cnt
     public m_next
 
     public function init(byval degree)
-        redim m_key(2*degree-2)  ' 0..2*degree-2
-        redim m_data(2*degree-2) ' 0..2*degree-2
+        redim m_key(2*degree-1)  ' 0..2*degree-2 - 1 extra for overflow.
+        redim m_data(2*degree-1) ' 0..2*degree-2 - 1 extra for overflow.
         m_leaf = true
         m_cnt = 0
-        set m_parent = nothing
         set m_next = nothing
         set init = me
     end function
 
 end class
 
-class tbtree
+class tstacknode
+
+    public m_node
+    public m_idx
+
+    public function init(byval node, byval idx)
+        set m_node = node
+        m_idx = idx
+        set init = me
+    end function
+
+end class
+
+class tbptree
 
     public m_root
     public m_degree
