@@ -1,549 +1,587 @@
-Option Explicit
+option explicit
 
-Private Const RED    = TRUE
-Private Const BLACK  = FALSE
+const red = true
+const black = false
 
-Class Tree
-    Public Root
-    Private DeleteCompleted
+sub main()
+    includefile "queue.vbs"     ' tqueue and tstack
+    dim i, arr : arr = array(5,3,7,1,4,9,11,13,15,2)
+    dim tree : set tree = new trbtree
+    randomize timer
+    for i=1 to 20
+        tree.rbputi(cint(rnd*1000))
+        ' tree.print
+        ' if not tree.isrbtree then
+        '     exit for
+        ' end if
+    next
+    tree.print
+    tree.isrbtree
+    wscript.stdout.write "Press enter to continue..."
+    wscript.stdin.read(1)
+    do until tree.isempty or not tree.isrbtree
+        tree.rbdeletei(tree.m_root.m_data)
+        ' tree.print
+    loop
+end sub
 
-    Private Sub Class_Initialize
-        ' wscript.echo "Tree Init"
-        Set Root = Nothing
-        DeleteCompleted = TRUE
-    End Sub
+sub includefile(fspec)
+    executeglobal createobject("scripting.filesystemobject").opentextfile(fspec).readall()
+end sub
 
-    Private Function isLess(byval a, byval b)
-        If a Is Nothing Or b Is Nothing Then
-            isLess = FALSE
-        Else
-            isLess = (a.Data - b.Data) < 0
-        End If
-    End Function
+class trbnode
 
-    Public Function TreeAssert(byval vmin, byval vmax)
-        TreeAssert = isRoot And isBST(Me.Root, vmin, vmax) And is23(Me.Root) And isBalanced
-    End Function
+    public m_data
+    public m_child(1) '0-left, 1-right
+    public m_parent
+    public m_color
 
-    Private Function isRoot
-        If Me.Root Is Nothing Then
-            isRoot = TRUE
-        ElseIf Me.Root.isRed Then
-            Wscript.Echo "Root is Red"
-            isRoot = FALSE
-        Else
-            isRoot = TRUE
-        End If
-    End Function
+    public function init(byval data)
+        m_data = data
+        set m_child(0) = nothing
+        set m_child(1) = nothing
+        set m_parent = nothing
+        m_color = red
+        set init = me
+    end function
 
-    Private Function isBST(n, byval vmin, byval vmax)
-        If n Is Nothing Then
-            isBST = TRUE
-        ElseIf n.Data < vmin or n.Data > vmax Then
-            Wscript.Echo "Data value is out of range ", n.Data
-            isBST = FALSE
-        ElseIf isLess(n, n.Lchild) Or isLess(n.Rchild, n) Then
-            Wscript.Echo "Data of children don't meet criteria of parent"
-            isBST = FALSE
-        Else
-            isBST = isBST(n.Lchild, vmin, vmax) And isBST(n.Rchild, vmin, vmax)
-        End If
-    End Function
+end class
 
-    Private Function is23(n)
-        If n Is Nothing Then
-            is23 = TRUE
-        ElseIf isRed(n) And (isRed(n.Lchild) Or isRed(n.Rchild)) Then
-            Wscript.Echo "Two reds in a row at ", n.Data
-            is23 = FALSE
-        Else
-            is23 = is23(n.Lchild) And is23(n.Rchild)
-        End If
-    End Function
+class trbtree
 
-    Private Function isBalanced
-        Dim black, n
-        black = 0
-        Set n = Me.Root
-        Do While Not n Is Nothing
-            If Not isRed(n) Then
-                black = black+1
-            End If
-            Set n = n.Lchild
-        Loop
-        isBalanced = isBal(Me.Root, black)
-    End Function
+    public m_root
+    public m_cnt
 
-    Private Function isBal(n, byval black)
-        If n Is Nothing Then
-            If black <> 0 Then
-                Wscript.Echo "Black nodes don't match ", black
-            End If
-            isBal = (black = 0)
-        Else
-            If Not isRed(n) Then
-                black = black-1
-            End If
-            isBal = isBal(n.Lchild, black) And isBal(n.Rchild, black)
-        End If
-    End Function
+    private sub class_initialize()
+        set m_root = nothing
+        m_cnt = 0
+    end sub
 
-    Private Function isRed(n)
-        If n Is Nothing Then
-            isRed = FALSE
-        Else
-            isRed = (n.Color = RED)
-        End If
-    End Function
+    private function iif(byval condition, byval a, byval b)
+        if condition then
+            iif = a
+        else
+            iif = b
+        end if
+    end function
 
-    Private Sub ColorFlip(n)
-        n.Color = Not n.Color
-        n.Lchild.Color = Not n.Lchild.Color
-        n.Rchild.Color = Not n.Rchild.Color
-    End Sub
+    private function isless(byval a, byval b)
+        if a is nothing or b is nothing then
+            isless = false
+        else
+            isless = (a.m_data < b.m_data)
+        end if
+    end function
 
-    Private Function RotateLeft(n)
-        Dim x
-        Wscript.Echo "Rotate Left ", n.Data
-        Set x = n.Rchild
-        Set n.Rchild = x.Lchild
-        Set x.Lchild = n
-        x.Color = n.Color
-        n.Color = RED
-        Set RotateLeft = x
-    End Function
+    private function max(a, b)
+        if a > b then
+            max = a
+        else
+            max = b
+        end if
+    end function
 
-    Private Function RotateRight(n)
-        Dim x
-        Wscript.Echo "Rotate Right ", n.Data
-        Set x = n.Lchild
-        Set n.Lchild = x.Rchild
-        Set x.Rchild = n
-        x.Color = n.Color
-        n.Color = RED
-        Set RotateRight = x
-    End Function
+    private function isred(byval node)
+        if node is nothing then
+            isred = false
+        else
+            isred = (node.m_color = red)
+        end if
+    end function
 
-    Public Function NodeInsert(byval v)
-        Set Root = NodeIns(Root, v)
-        Root.Color = BLACK
-        NodeInsert = TRUE
-    End Function
+    private function color2char(byval node)
+        if node is nothing then
+            color2char = "b"
+        elseif isred(node) then
+            color2char = "r"
+        else
+            color2char = "b"
+        end if
+    end function
 
-    Private Function NodeIns(n, byval v)
-        If n Is Nothing Then
-            Set n = (New Node).Init(v)
-        Else
-            If isRed(n.Lchild) And isRed(n.Rchild) Then
-                ColorFlip(n)
-            End If
+    public function isempty
+        isempty = (m_root is nothing)
+    end function
 
-            If v < n.Data Then
-                Set n.Lchild = NodeIns(n.Lchild, v)
-            ElseIf v > n.Data Then
-                Set n.Rchild = NodeIns(n.Rchild, v)
-            Else
-                ' n was found so already in tree.
-            End If
+    public function isrbtree()
+        isrbtree = (isrbnode(m_root) <> -1)
+    end function
 
-            If isRed(n.Lchild) Then
-                If isRed(n.Lchild.Rchild) Then
-                    Set n.Lchild = RotateLeft(n.Lchild)
-                    Set n = RotateRight(n)
-                ElseIf isRed(n.Lchild.Lchild) Then
-                    Set n = RotateRight(n)
-                End If
-            ElseIf isRed(n.Rchild) Then
-                If isRed(n.Rchild.Lchild) Then
-                    Set n.Rchild = RotateRight(n.Rchild)
-                    Set n = RotateLeft(n)
-                ElseIf isRed(n.Rchild.Rchild) Then
-                    Set n = RotateLeft(n)
-                End If
-            End If
-        End If
-        Set NodeIns = n
-    End Function
+    private function isrbnode(node)
+        if node is nothing then
+            isrbnode = 0
+        elseif node is m_root and isred(node) then
+            wscript.echo "ERROR: root is red", node.m_data
+            isrbnode = -1
+        elseif isless(node, node.m_child(0)) or isless(node.m_child(1), node) then
+            wscript.echo "ERROR: not a BST", node.m_data
+            isrbnode = -1
+        elseif isred(node) and (isred(node.m_child(0)) or isred(node.m_child(1))) then
+            wscript.echo "ERROR: two red nodes in a row", node.m_data
+            isrbnode = -1
+        else
+            dim lh, rh
+            lh = isrbnode(node.m_child(0))
+            rh = isrbnode(node.m_child(1))
+            if lh = -1 or rh = -1 then
+                isrbnode = -1
+            elseif lh <> rh then
+                wscript.echo "ERROR: black heights don't match", node.m_data
+                isrbnode = -1
+            elseif isred(node) then
+                isrbnode = lh
+            else ' black node
+                isrbnode = lh+1
+            end if
+        end if
+    end function
 
-    Public Function NodeInsI(byval v)
-        Dim n, p, gp, ggp, u, f, stk, head
-        Set head = New Node : head.Color = BLACK : head.Lchild = Root ' Sentinel above root
-        Set stk = New Stack : stk.Push head
-        Set f = (New Node).Init(v) : Set p = head : Set n = Root
-        Do Until n Is Nothing
-            If v = n.Data Then ' Item already in the tree
-                Set NodeInsI = n
-                Exit Function
-            ElseIf v < n.Data Then
-                Set p = n
-                Set n = n.Lchild
-            Else
-                Set p = n
-                Set n = n.Rchild
-            End If
-            stk.Push p
-        Loop
-        If p Is head Then ' At the root
-            Set Root = f
-        Else
-            If f.Data < p.Data Then
-                Set p.Lchild = f
-            Else
-                Set p.Rchild = f
-            End If
-            ' Rebalance
-            Set p = stk.Pop
-            Do While isRed(p)
-                Set gp = stk.Pop
-                If isRed(gp.Lchild) And isRed(gp.Rchild) Then
-                    ColorFlip gp
-                    Set p = stk.Pop
-                ElseIf isRed(gp.Lchild) Then
-                    If isRed(gp.Lchild.Rchild) Then ' Left/Right
-                        Set gp.Lchild = RotateLeft(gp.Lchild.Rchild)
-                    End If
-                    If isRed(gp.Lchild.Lchild) Then ' Left/Left
-                        Set ggp = stk.Pop
-                        If ggp.Lchild is gp Then
-                            Set ggp.Lchild = RotateRight(gp)
-                            Set p = ggp.Lchild
-                        Else
-                            Set ggp.Rchild = RotateRight(gp)
-                            Set p = ggp.Rchild
-                        End If
-                    End If
-                ElseIf isRed(gp.Rchild) Then
-                    If isRed(gp.Rchild.Lchild) Then ' Right/Left
-                        Set gp.Rchild = RotateRight(gp.Rchild.Lchild)
-                    End If
-                    If isRed(gp.Rchild.Rchild) Then ' Right/Right
-                        Set ggp = stk.Pop
-                        If ggp.Lchild is gp Then
-                            Set ggp.Lchild = RotateLeft(gp)
-                            Set p = ggp.Lchild
-                        Else
-                            Set ggp.Rchild = RotateLeft(gp)
-                            Set p = ggp.Rchild
-                        End If
-                    End If
-                End If
-            Loop
-        End If
-        Root.Color = BLACK
-        Set NodeInsI = f
-    End Function
+    public sub print()
+        dim queue : set queue = new tqueue
+        if m_root is nothing then
+            exit sub
+        end if
+        queue.enqueue m_root
+        dim lcnt : lcnt = queue.length
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            wscript.stdout.write node.m_data & "," & color2char(node) & " "
+            if not node.m_child(0) is nothing then
+                queue.enqueue node.m_child(0)   ' left child
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)   ' right child
+            end if
+            lcnt = lcnt-1
+            if lcnt = 0 then        ' all done with current level
+                wscript.stdout.writeline
+                lcnt = queue.length ' set level count to next level size
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Private Function SearchNode(n, byval v)
-        If n Is Nothing Then
-            SearchNode = FALSE
-        ElseIf v < n.Data Then
-            SearchNode = SearchNode(n.Lchild, v)
-        ElseIf v > n.Data Then
-            SearchNode = SearchNode(n.Rchild, v)
-        Else
-            SearchNode = TRUE
-        End If
-    End Function
+    public function rbfindi(data)
+        dim node : set node = m_root
+        do until node is nothing
+            if node.m_data = data then
+                exit do
+            end if
+            dim way : way = (node.m_data < data) and 1
+            set node = node.m_child(way)
+        loop
+        set rbfindi = node
+    end function
 
-    Public Function Search(byval v)
-        Search = SearchNode(Me.Root, v)
-    End Function
+    public function rotate(byval node, byval way)
+        dim root : set root = node.m_child(way xor 1)
+        set node.m_child(way xor 1) = root.m_child(way)
+        if not root.m_child(way) is nothing then
+            set root.m_child(way).m_parent = node
+        end if
+        set root.m_parent = node.m_parent
+        if node.m_parent is nothing then
+            set m_root = root
+        else
+            dim wayp : wayp = (node is node.m_parent.m_child(1)) and 1
+            set node.m_parent.m_child(wayp) = root
+        end if
+        set root.m_child(way) = node
+        set node.m_parent = root
+        root.m_color = node.m_color
+        node.m_color = red
+        set rotate = root
+    end function
 
-    Private Function InOrderSuccessor(n)
-        Dim v
-        Set v = n.Rchild
-        Do While Not v.Lchild Is Nothing
-            Set v = v.Lchild
-        Loop
-        Set InOrderSuccessor = v
-    End Function
+    private sub colorflip(byval node)
+        node.m_color = not node.m_color
+        node.m_child(0).m_color = not node.m_color
+        node.m_child(1).m_color = not node.m_color
+    end sub
 
-    Private Function DelFixupLeft(n) ' Double black is to the left
-        Dim s ' sibling of Double Black
-        If Not DeleteCompleted Then
-            Wscript.Echo "DelFixupLeft"
-            Set s = n.Rchild
-            If Not s Is Nothing Then
-                If Not isRed(s) And (isRed(s.Lchild) Or isRed(s.Rchild)) Then ' Case 1
-                    Wscript.Echo "Case 1 - Sibling Black with a Red child"
-                    If isRed(s.Rchild) Then
-                        Set n = RotateLeft(n)
-                    ElseIf isRed(s.Lchild) Then
-                        Set n.Rchild = RotateRight(n.Rchild)
-                        Set n = RotateLeft(n)
-                    End If
-                    n.Lchild.Color = BLACK
-                    n.Rchild.Color = BLACK
-                    DeleteCompleted = TRUE
-                ElseIf Not isRed(s) And Not isRed(s.Lchild) And Not isRed(s.Rchild) Then ' Case 2
-                    Wscript.Echo "Case 2 - Sibling Black with Black Children ", isRed(n)
-                    DeleteCompleted = isRed(n) ' If parent RED we are done otherwise push it up a level
-                    n.Color = BLACK
-                    s.Color = RED
-                ElseIf isRed(s) Then ' Case 3
-                    Wscript.Echo "Case 3 - Sibling Red"
-                    Set n = RotateLeft(n)
-                    Set n.Lchild = DelFixupLeft(n.Lchild) ' Let's recursively fix this since it's now a previous case
-                    DeleteCompleted = TRUE
-                End If
-            End If
-        End If
-        Set DelFixupLeft = n
-    End Function
+    public function rbputi(byval data)
+        wscript.echo "Insert", data
+        dim node, parent, way : set node = m_root : set parent = nothing
+        do until node is nothing
+            if node.m_data = data then
+                set rbputi = node
+                exit function
+            end if
+            set parent = node
+            way = (node.m_data < data) and 1
+            set node = node.m_child(way)
+        loop
+        ' create the node
+        set node = (new trbnode).init(data)
+        if node is nothing then
+            wscript.stdout.writeline "node could not be allocated."
+            rbputi = node
+            exit function
+        end if
+        dim inserted : set inserted = node ' save a pointer to inserted node
+        ' update the tree
+        set node.m_parent = parent
+        if parent is nothing then
+            set m_root = node
+        else
+            set parent.m_child(way) = node
+        end if
+        ' rebalance
+        rbputifixup node
+        ' update root
+        m_root.m_color = black
+        m_cnt = m_cnt+1
+        set rbputi = inserted
+    end function
 
-    Private Function DelFixupRight(n) ' Double black is to the right
-        Dim s ' sibling of Double Black
-        If Not DeleteCompleted Then
-            Wscript.Echo "DelFixupRight"
-            Set s = n.Lchild
-            If Not s Is Nothing Then
-                If Not isRed(s) And (isRed(s.Lchild) Or isRed(s.Rchild)) Then ' Case 1
-                    Wscript.Echo "Case 1 - Sibling Black with a Red child"
-                    If isRed(s.Lchild) Then
-                        Set n = RotateRight(n)
-                    ElseIf isRed(s.Rchild) Then
-                        Set n.Lchild = RotateLeft(n.Lchild)
-                        Set n = RotateRight(n)
-                    End If
-                    n.Lchild.Color = BLACK
-                    n.Rchild.Color = BLACK
-                    DeleteCompleted = TRUE
-                ElseIf Not isRed(s) And Not isRed(s.Lchild) And Not isRed(s.Rchild) Then ' Case 2
-                    Wscript.Echo "Case 2 - Sibling Black with Black Children ", isRed(n)
-                    DeleteCompleted = isRed(n) ' If parent RED we are done otherwise push it up a level
-                    n.Color = BLACK
-                    s.Color = RED
-                ElseIf isRed(s) Then ' Case 3
-                    Wscript.Echo "Case 3 - Sibling Red"
-                    Set n = RotateRight(n)
-                    Set n.Rchild = DelFixupRight(n.Rchild) ' Let's recursively fix this since it's now a previous case
-                    DeleteCompleted = TRUE
-                End If
-            End If
-        End If
-        Set DelFixupRight = n
-    End Function
+    private sub rbputifixup(byval node)
+        dim parent : set parent = node.m_parent
+        do while isred(parent)
+            dim gparent : set gparent = parent.m_parent
+            dim way : way = (gparent.m_child(1) is parent) and 1
+            if isred(gparent.m_child(way xor 1)) then    ' case 1 - color flip
+                wscript.echo "Case 1 - Color Flip", gparent.m_data
+                colorflip gparent
+                set parent = gparent.m_parent
+            else
+                if isred(parent.m_child(way xor 1)) then ' case 2 - rotate l/r or r/l
+                    wscript.echo "Case 2 - Rotate", gparent.m_child(way).m_data, way
+                    set gparent.m_child(way) = rotate(gparent.m_child(way), way)
+                end if
+                wscript.echo "Case 3 - Rotate", gparent.m_data, way xor 1
+                set gparent = rotate(gparent, way xor 1) ' case 3 - rotate ll or rr
+                exit do
+            end if
+        loop
+    end sub
 
-    Private Function DelNode(n, byval v)
-        Dim t
-        If Not n Is Nothing Then
-            If v < n.Data Then
-                Set n.Lchild = DelNode(n.Lchild, v)
-                Set n = DelFixupLeft(n)
-            ElseIf v > n.Data Then
-                Set n.Rchild = DelNode(n.Rchild, v)
-                Set n = DelFixupRight(n)
-            Else
-                If n.Lchild Is Nothing And n.Rchild Is Nothing Then
-                    Wscript.Echo "Deleting Leaf ", isRed(n)
-                    DeleteCompleted = isRed(n)
-                    Set n = Nothing
-                ElseIf n.Lchild Is Nothing Then
-                    Wscript.Echo "Deleting One Child Leaf"
-                    Set t = n
-                    Set n = t.Rchild
-                    n.Color = BLACK
-                    Set t = Nothing
-                    DeleteCompleted = TRUE
-                ElseIf n.Rchild Is Nothing Then
-                    Wscript.Echo "Deleting One Child Leaf"
-                    Set t = n
-                    Set n = t.Lchild
-                    n.Color = BLACK
-                    Set t = Nothing
-                    DeleteCompleted = TRUE
-                Else
-                    Set t = InOrderSuccessor(n)
-                    n.Data = t.Data
-                    Set n.Rchild = DelNode(n.Rchild, t.Data)
-                    Set n = DelFixupRight(n)
-                End If
-            End If
-        End If
-        Set DelNode = n
-    End Function
+    public function rbdeletei(byval data)
+        wscript.echo "Deleting => ", data
+        dim node, q, way : set node = m_root
+        do until node is nothing ' or node.m_data = data
+            if node.m_data = data then
+                exit do
+            end if
+            way = (node.m_data < data) and 1
+            set node = node.m_child(way)
+        loop
+        if node is nothing then ' not found
+            set rbdeletei = node
+            exit function
+        end if
+        if node.m_child(0) is nothing then     ' one child or leaf
+            set q = node.m_child(1)
+        elseif node.m_child(1) is nothing then ' one child or leaf
+            set q = node.m_child(0)
+        else                                   ' two children find successor
+            dim succ : set succ = node.m_child(1)
+            do until succ.m_child(0) is nothing
+                set succ = succ.m_child(0)
+            loop
+            node.m_data = succ.m_data
+            set node = succ
+            set q = node.m_child(1)
+        end if
+        ' node is to be deleted and q is successor node
+        if not node is m_root and not isred(node) and not isred(q) then
+            rbdeleteifixup node
+        end if
+        ' splice out node
+        if node.m_parent is nothing then
+            set m_root = q
+        else
+            way = (node is node.m_parent.m_child(1)) and 1
+            set node.m_parent.m_child(way) = q
+        end if
+        ' update pointers
+        if not q is nothing then
+            set q.m_parent = node.m_parent
+            q.m_color = black
+        end if
+        ' update root
+        if not m_root is nothing then
+            m_root.m_color = black
+        end if
+        m_cnt = m_cnt-1
+        set rbdeletei = node
+    end function
 
-    Public Function DeleteNode(byval v)
-        Set Root = DelNode(Root, v)
-        If Not Root Is Nothing Then
-            Root.Color = BLACK
-        End If
-        DeleteNode = TRUE
-    End Function
+    private sub rbdeleteifixup(byval node)
+        dim db : set db = node
+        do
+            dim parent : set parent = db.m_parent
+            dim way : way = (db is parent.m_child(1)) and 1
+            dim sib : set sib = parent.m_child(way xor 1)
+            if isred(sib) then                                              ' case 1 - red sibling case reduction
+                wscript.echo "case 1 - red sibling case reduction - rotate", parent.m_data, way
+                set parent = rotate(parent, way)
+                set parent = db.m_parent
+                set sib = parent.m_child(way xor 1)
+            end if
+            if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
+                wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", parent.m_data, way
+                sib.m_color = red
+                if isred(parent) or parent is m_root then
+                    parent.m_color = black
+                    exit do
+                end if
+                set db = parent
+            else
+                if isred(sib.m_child(way)) then                             ' case 3 - lr/rl sibling red child - rotate
+                    wscript.echo "case 3 - lr/rl sibling red child - rotate", parent.m_child(way xor 1).m_data, way xor 1
+                    set parent.m_child(way xor 1) = rotate(parent.m_child(way xor 1), way xor 1)
+                end if
+                wscript.echo "case 4 - ll/rr sibling red child - rotate", parent.m_data, way
+                set parent = rotate(parent, way)                            ' case 4 - ll/rr sibling red child - rotate
+                parent.m_child(0).m_color = black
+                parent.m_child(1).m_color = black
+                exit do
+            end if
+        loop until false
+    end sub
 
-    Public Function SearchBlackLeaf(n)
-        If n Is Nothing Then
-            Set SearchBlackLeaf = n
-        ElseIf isBlack(n) and n.Lchild Is Nothing and n.Rchild Is Nothing Then
-            Set SearchBlackLeaf = n
-        Else
-            Dim t
-            Set t = SearchBlackLeaf(n.Lchild)
-            If t Is Nothing Then
-                Set t = SearchBlackLeaf(n.Rchild)
-            End If
-            Set SearchBlackLeaf = t
-        End If
-    End Function
+    public sub preorderr()
+        preorderrnode(m_root)
+        wscript.stdout.writeline
+    end sub
 
-    Public Sub InsertRandomData(byval cnt)
-        Dim i, rnum
-        Randomize timer
-        For i = 1 to cnt
-            rnum = rnd*100 mod cnt
-            If Not Search(rnum) Then
-                If Not NodeInsert(rnum) Then
-                    Exit Sub
-                End If
-            End If
-        Next
-    End Sub
+    private sub preorderrnode(byval node)
+        if not node is nothing then
+            wscript.stdout.write node.m_data & " "
+            preorderrnode(node.m_child(0))
+            preorderrnode(node.m_child(1))
+        end if
+    end sub
 
-    Public Sub PrintTree
-        PrintNode(Me.Root)
-        Wscript.Echo ""
-    End Sub
+    public sub preorderi()
+        dim stack : set stack = new tstack
+        dim node : set node = m_root
+        do until node is nothing and stack.isempty
+            if not node is nothing then
+                wscript.stdout.write node.m_data & " "
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            else
+                set node = stack.pop
+                set node = node.m_child(1)  ' right child
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Private Sub PrintNode(n)
-        If Not n Is Nothing Then
-            If n.Lchild Is Nothing Then
-                wscript.stdout.write "*,b "
-            Else
-                wscript.stdout.write n.Lchild.Data & "," & n.Lchild.ColorChar(n.Lchild) & " "
-            End If
-            wscript.stdout.write n.Data & "," & n.ColorChar(n) & " "
-            If n.Rchild Is Nothing Then
-                wscript.stdout.write "*,b "
-            Else
-                wscript.stdout.write n.Rchild.Data & "," & n.Rchild.ColorChar(n.Rchild) & " "
-            End If
-            wscript.echo ""
-            PrintNode(n.Lchild)
-            PrintNode(n.Rchild)
-        End If
-    End Sub
+    public sub preorderiw()
+        dim stack : set stack = new tstack
+        dim node : set node = m_root
+        do while true
+            do until node is nothing
+                wscript.stdout.write node.m_data & " "
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            loop
+            if not stack.isempty then
+                set node = stack.pop
+                set node = node.m_child(1)
+            else
+                exit do
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Private Sub Class_Terminate
-        ' wscript.echo "Tree Term"
-        Set Root = Nothing
-    End Sub
-End Class
+    public sub inorderr()
+        inorderrnode(m_root)
+        wscript.stdout.writeline
+    end sub
 
-Class Node
-    Public Data
-    Public Color
-    Public Lchild
-    Public Rchild
+    private sub inorderrnode(byval node)
+        if not node is nothing then
+            inorderrnode(node.m_child(0))
+            wscript.stdout.write node.m_data & " "
+            inorderrnode(node.m_child(1))
+        end if
+    end sub
 
-    Private Sub Class_Initialize
-        ' Wscript.Echo "Node Init"
-        Data  = -1
-        Color = RED
-        Set Lchild = Nothing
-        Set Rchild = Nothing
-    End Sub
+    public sub inorderi()
+        dim stack : set stack = new tstack
+        dim node : set node = m_root
+        do until node is nothing and stack.isempty
+            if not node is nothing then
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            else
+                set node = stack.pop
+                wscript.stdout.write node.m_data & " "
+                set node = node.m_child(1)  ' right child
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Public Function Init(n)
-        Data  = N
-        Color = RED
-        Set Lchild = Nothing
-        Set Rchild = Nothing
-        Set Init = Me
-    End Function
+    public sub inorderiw()
+        dim stack : set stack = new tstack
+        dim node : set node = m_root
+        do while true
+            do until node is nothing
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            loop
+            if not stack.isempty then
+                set node = stack.pop
+                wscript.stdout.write node.m_data & " "
+                set node = node.m_child(1)
+            else
+                exit do
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Public Function ColorChar(n)
-        If n Is Nothing Then
-            ColorChar = "b"
-        ElseIf n.Color = RED Then
-            ColorChar = "r"
-        Else
-            ColorChar = "b"
-        End If
-    End Function
+    public sub postorderr()
+        postorderrnode(m_root)
+        wscript.stdout.writeline
+    end sub
 
-    Public Function isRed
-        isRed = (Me.Color = RED)
-    End Function
+    private sub postorderrnode(byval node)
+        if not node is nothing then
+            postorderrnode(node.m_child(0))
+            postorderrnode(node.m_child(1))
+            wscript.stdout.write node.m_data & " "
+        end if
+    end sub
 
-    Private Sub Class_terminate
-        ' Wscript.Echo "Node Term"
-        Set Lchild = Nothing
-        Set Rchild = Nothing
-    End Sub
-End Class
+    public sub postorderi()
+        dim stack : set stack = new tstack
+        dim node, prev : set node = m_root : set prev = nothing
+        do until node is nothing and stack.isempty
+            if not node is nothing then
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            else
+                set node = stack.pop
+                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                    wscript.stdout.write node.m_data & " "
+                    set prev = node
+                    set node = nothing
+                else
+                    stack.push node
+                    set node = node.m_child(1)  ' right child
+                end if
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-Class StackNode
-    Public Data
-    Public Nex
+    public sub postorderiw()
+        dim stack : set stack = new tstack
+        dim node, prev : set node = m_root : set prev = nothing
+        do while true
+            do until node is nothing
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            loop
+            if not stack.isempty then
+                set node = stack.pop
+                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                    wscript.stdout.write node.m_data & " "
+                    set prev = node
+                    set node = nothing
+                else
+                    stack.push node
+                    set node = node.m_child(1)
+                end if
+            else
+                exit do
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Private Sub Class_Initialize
-        Set Data = Nothing
-        Set Nex = Nothing
-    End Sub
+    public sub levelorderi()
+        dim queue : set queue = new tqueue
+        if m_root is nothing then
+            exit sub
+        end if
+        queue.enqueue m_root
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            wscript.stdout.write node.m_data & " "
+            if not node.m_child(0) is nothing then
+                queue.enqueue node.m_child(0)
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
 
-    Public Function Init(n)
-        Set Data = n
-        Set nex = Nothing
-        Set Init = Me
-    End Function
-End Class
+    public function heightr()
+        heightr = heightrnode(m_root)
+    end function
 
-Class Stack
-    Private Cur
+    private function heightrnode(node)
+        if node is nothing then
+            heightrnode = 0
+        else
+            dim lh, rh
+            lh = heightrnode(node.m_child(0))
+            rh = heightrnode(node.m_child(1))
+            heightrnode = 1 + max(lh, rh)
+        end if
+    end function
 
-    Sub Class_Initialize
-        Set Cur = Nothing
-    End Sub
+    public function heighti()
+        dim stack : set stack = new tstack
+        dim node, prev : set node = m_root : set prev = nothing
+        dim hcnt, hmax : hcnt = 0 : hmax = 0
+        do until node is nothing and stack.isempty
+            if not node is nothing then
+                stack.push node
+                hcnt = hcnt+1
+                set node = node.m_child(0)  ' left child
+            else
+                set node = stack.pop
+                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                    if hcnt > hmax then
+                        hmax = hcnt
+                    end if
+                    hcnt = hcnt-1
+                    set prev = node
+                    set node = nothing
+                else
+                    stack.push node
+                    set node = node.m_child(1)  ' right child
+                end if
+            end if
+        loop
+        heighti = hmax
+    end function
 
-    Function Push(n)
-        Dim t
-        If n Is Nothing Then
-            Set Push = n
-            Exit Function
-        End If
-        Set t = (New StackNode).Init(n)
-        Set t.Nex = Cur
-        Set Cur = t
-        Set Push = t
-    End Function
+    public function heightiq()
+        dim queue : set queue = new tqueue
+        if m_root is nothing then
+            heightiq = 0
+            exit function
+        end if
+        queue.enqueue m_root
+        dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            if not node.m_child(0) is nothing then
+                queue.enqueue node.m_child(0)   ' left child
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)   ' right child
+            end if
+            lcnt = lcnt-1
+            if lcnt = 0 then        ' all done with current level
+                hcnt = hcnt+1
+                lcnt = queue.length ' set level count to next level size
+            end if
+        loop
+        heightiq = hcnt
+    end function
 
-    Function Pop
-        Dim t
-        If cur Is Nothing Then
-            Set Pop = Nothing
-            Exit Function
-        End If
-        Set t = Cur
-        Set Cur = Cur.nex
-        Set Pop = t.Data
-        Set t = Nothing
-    End Function
-End Class
+end class
 
-Dim T, n, i, S
-Set T = New Tree
-' T.InsertRandomData 50
-T.NodeInsI 5
-T.NodeInsI 3
-T.NodeInsI 7
-T.NodeInsI 9
-T.PrintTree
-' Set S = New Stack
-' S.push T.Root
-' S.push T.Root.Lchild
-' S.push T.Root.Rchild
-' Wscript.echo s.pop.Data
-' Set n = s.Pop
-' Wscript.echo n.data
-' Set n = s.Pop
-' Wscript.echo n.data
-' For i = 1 to 5
-' Do
-'     T.DeleteNode(T.Root.Data)
-'     T.PrintTree
-'     If Not T.TreeAssert(0, 1000) Then
-'         Wscript.Echo "Tree is not valid."
-'     End If
-' Loop Until T.Root Is Nothing
-' Next
-Set T = Nothing
+call main()

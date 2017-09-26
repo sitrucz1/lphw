@@ -20,6 +20,22 @@ sub main()
     timerend = timer
     wscript.echo "timer => ", timerend - timerstart
     timerstart = timer
+    wscript.echo bsearch2(arr, 7)
+    wscript.echo bsearch2(arr, 0)
+    wscript.echo bsearch2(arr, 17)
+    wscript.echo bsearch2(arr, 4)
+    wscript.echo bsearch2(arr, 6)
+    timerend = timer
+    wscript.echo "timer => ", timerend - timerstart
+    timerstart = timer
+    wscript.echo bsearch3(arr, 7)
+    wscript.echo bsearch3(arr, 0)
+    wscript.echo bsearch3(arr, 17)
+    wscript.echo bsearch3(arr, 4)
+    wscript.echo bsearch3(arr, 6)
+    timerend = timer
+    wscript.echo "timer => ", timerend - timerstart
+    timerstart = timer
     wscript.echo intbsearch(arr, 7)
     wscript.echo intbsearch(arr, 0)
     wscript.echo intbsearch(arr, 17)
@@ -47,6 +63,43 @@ function bsearch(arr, key)
     else
         bsearch = -1
     end if
+end function
+
+function bsearch2(arr, key)
+    dim lo, hi, idx
+    lo = 0 : hi = ubound(arr)
+    do while lo < hi
+        idx = lo + (hi - lo) \ 2
+        wscript.echo "idx => ", idx
+        if key <= arr(idx) then
+            hi = idx
+        else
+            lo = idx+1
+        end if
+    loop
+    if key = arr(lo) then
+        bsearch2 = lo
+    else
+        bsearch2 = -1
+    end if
+end function
+
+function bsearch3(arr, key)
+    dim lo, hi, idx
+    lo = 0 : hi = ubound(arr)
+    do while lo <= hi
+        idx = lo + (hi - lo) \ 2
+        wscript.echo "idx => ", idx
+        if key < arr(idx) then
+            hi = idx-1
+        elseif key > arr(idx) then
+            lo = idx+1
+        else
+            bsearch3 = idx
+            exit function
+        end if
+    loop
+    bsearch3 = -1
 end function
 
 function intbsearch(arr, key)

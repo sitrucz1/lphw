@@ -28,10 +28,13 @@ sub main()
     '             19
     tree.preorderr
     tree.preorderi
+    tree.preorderiw
     tree.inorderr
     tree.inorderi
+    tree.inorderiw
     tree.postorderr
     tree.postorderi
+    tree.postorderiw
     tree.levelorderi
     wscript.echo tree.heightr
     wscript.echo tree.heighti
@@ -304,6 +307,25 @@ class tbst
         wscript.stdout.writeline
     end sub
 
+    public sub preorderiw()
+        dim stack : set stack = new tstack
+        dim node : set node = m_root
+        do while true
+            do until node is nothing
+                wscript.stdout.write node.m_data & " "
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            loop
+            if not stack.isempty then
+                set node = stack.pop
+                set node = node.m_child(1)
+            else
+                exit do
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
+
     public sub inorderr()
         inorderrnode(m_root)
         wscript.stdout.writeline
@@ -328,6 +350,25 @@ class tbst
                 set node = stack.pop
                 wscript.stdout.write node.m_data & " "
                 set node = node.m_child(1)  ' right child
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
+
+    public sub inorderiw()
+        dim stack : set stack = new tstack
+        dim node : set node = m_root
+        do while true
+            do until node is nothing
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            loop
+            if not stack.isempty then
+                set node = stack.pop
+                wscript.stdout.write node.m_data & " "
+                set node = node.m_child(1)
+            else
+                exit do
             end if
         loop
         wscript.stdout.writeline
@@ -368,11 +409,37 @@ class tbst
         wscript.stdout.writeline
     end sub
 
+    public sub postorderiw()
+        dim stack : set stack = new tstack
+        dim node, prev : set node = m_root : set prev = nothing
+        do while true
+            do until node is nothing
+                stack.push node
+                set node = node.m_child(0)  ' left child
+            loop
+            if not stack.isempty then
+                set node = stack.pop
+                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                    wscript.stdout.write node.m_data & " "
+                    set prev = node
+                    set node = nothing
+                else
+                    stack.push node
+                    set node = node.m_child(1)
+                end if
+            else
+                exit do
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
+
     public sub levelorderi()
         dim queue : set queue = new tqueue
-        if not m_root is nothing then
-            queue.enqueue m_root
+        if m_root is nothing then
+            exit sub
         end if
+        queue.enqueue m_root
         do until queue.isempty
             dim node : set node = queue.dequeue
             wscript.stdout.write node.m_data & " "
@@ -430,9 +497,11 @@ class tbst
 
     public function heightiq()
         dim queue : set queue = new tqueue
-        if not m_root is nothing then
-            queue.enqueue m_root
+        if m_root is nothing then
+            heightiq = 0
+            exit function
         end if
+        queue.enqueue m_root
         dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
         do until queue.isempty
             dim node : set node = queue.dequeue
