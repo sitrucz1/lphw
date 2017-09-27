@@ -21,7 +21,7 @@ sub main()
     btree.m_root.m_key(2) = 10
     btree.m_root.m_cnt = 3
     btree.m_root.m_leaf = true ' false
-    btree.splitleafnode btree.m_root, 7, 5
+    btree.splitleafnode btree.m_root, 12, 5
     btree.traverse
     wscript.quit
     ' set btree.m_root.m_link(0).m_link(0) = (new tbtreenode).init(btree.m_degree)
@@ -323,46 +323,56 @@ class tbptree
     end function
 
     public sub splitleafnode(byref node, byval key, byval data)
-        dim sib : set sib = (new tbpleafnode).init(m_degree)
-        dim i, j : i = node.m_cnt : j = m_degree-1
-        do while j >= 0 and key < node.m_key(i)
-            sib.m_key(j) = node.m_key(i)
-            sib.m_data(j) = node.m_data(i)
-            j = j-1
-            i = i-1
-        loop
-        if j >= 0 then
-            sib.m_key(j) = key
-            sib.m_data(j) = data
-        end if
-        for j = j-1 to 0 step -1
-            sib.m_key(i) = key
-            sib.m_data(i) = data
-            i = i-1
-        next
-        do while i >= 0
-            if key >= node.m_key(i) then
+        dim i, sib : i = node.m_cnt : set sib = (new tbpleafnode).init(m_degree)
+        do while i > 0
+            if key >= node.m_key(i-1) then
                 exit do
             end if
-            node.m_key(i+1) = node.m_key(i)
-            node.m_data(i+1) = node.m_data(i)
+            node.m_key(i) = node.m_key(i-1)
+            node.m_data(i) = node.m_data(i-1)
             i = i-1
         loop
-        if i >= 0 then
-            if key < node.m_key(i) then
-                node.m_key(i) = key
-                node.m_data(i) = data
-            end if
-        end if
-        ' update counts
+        node.m_key(i) = key
+        node.m_data(i) = data
+        for i = 0 to m_degree-1
+            sib.m_key(i) = node.m_key(i+m_degree)
+            sib.m_data(i) = node.m_data(i+m_degree)
+        next
         node.m_cnt = m_degree
         sib.m_cnt = m_degree
-        ' update links
         set sib.m_next = node.m_next
         set node.m_next = sib
-        ' update leaf
-        sib.m_leaf = node.m_leaf ' always true if i dont make this a generic splitnode
-        ' update parent links
+        ' update parent
+    end sub
+
+    public sub updateparent(byref parent, byval node, byval sib, byval key, byval idx)
+        if parent is nothing then
+            dim newroot : set newroot = (new tbpkeynode).init(m_degree)
+            set newroot.m_link(0) = node
+            set newroot.m_link(1) = sib
+            newroot.m_key(0) = key
+            newroot.m_cnt = 1
+            set m_root = newroot
+            exit sub
+        end if
+        dim i
+        for i = parent.m_cnt to idx+1
+            parent.m_key(i+1) = parent.m_key(i)
+            set parent.m_link(i+1) = parent.m_link(i)
+        next
+        parent.m_key(idx) = key
+        parent.m_cnt = parent.m_cnt+1
+        set parent.m_link(idx+1) = sib
+        if parent.m_cnt = 2*m_degree then
+            ' splitnode
+        end if
+    end sub
+
+    public sub splitnode(byref node, byval idx)
+        dim i, sib : set sib = (new tbpkeynode).init(m_degree)
+        for i = 0 to m_degree-1
+
+        next
     end sub
 
     public function btdelete(byval data)
