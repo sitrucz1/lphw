@@ -242,33 +242,32 @@ class tbst
     public function bstdeletei(byval data)
         dim node, parent, q, way : set node = m_root : set parent = nothing
         do until node is nothing
-            if node.m_data <> data then
-                set parent = node
-                way = (node.m_data < data) and 1
-                set node = node.m_child(way)
-            else
-                if node.m_child(0) is nothing then
-                    set q = node.m_child(1)
-                    exit do
-                elseif node.m_child(1) is nothing then
-                    set q = node.m_child(0)
-                    exit do
-                else
-                    dim succ : set succ = node.m_child(1)
-                    do until succ.m_child(0) is nothing
-                        set succ = succ.m_next(0)
-                    loop
-                    node.m_data = succ.m_data
-                    data = succ.m_data
-                    set parent = node
-                    way = 1 ' right child
-                    set node = node.m_child(way)
-                end if
+            if node.m_data = data then
+                exit do
             end if
+            set parent = node
+            way = (node.m_data < data) and 1
+            set node = node.m_child(way)
         loop
         if node is nothing then ' not found
             set bstdeletei = node
             exit function
+        end if
+        if node.m_child(0) is nothing then
+            set q = node.m_child(1)
+        elseif node.m_child(1) is nothing then
+            set q = node.m_child(0)
+        else
+            set parent = node
+            way = 1 ' right child
+            dim succ : set succ = node.m_child(1)
+            do until succ.m_child(0) is nothing
+                set parent = succ
+                way = 0
+                set succ = succ.m_next(0)
+            loop
+            node.m_data = succ.m_data
+            set q = succ.m_child(1)
         end if
         if parent is nothing then
             set m_root = q
