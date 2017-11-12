@@ -31,7 +31,6 @@ def qsort(arr, left, right):
     Hoare's partition quicksort scheme with median of three and tail
     recursion elimination
     """
-    print(left, right)
     # pylint: disable=too-many-branches
     print(left, right)
     while left < right:

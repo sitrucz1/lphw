@@ -24,13 +24,6 @@ sub main()
     wscript.echo ht.delete_("iphone").m_data
     wscript.echo ht.delete_("daughter1").m_data
     ht.printtable
-
-    dim st : set st = new tstack
-    st.push "iphone", "curtis@matzzone.com"
-    st.push "work", "curtis.matz@optum.com"
-    wscript.echo st.count
-    wscript.echo st.pop.m_key
-    wscript.echo st.pop.m_key
 end sub
 
 class titem
@@ -147,41 +140,6 @@ class thashtable
         next
         wscript.echo "fill factor => ", m_cnt / m_size * 100
     end sub
-
-end class
-
-class tstack
-
-    public m_top
-    public m_cnt
-
-    private sub class_initialize
-        set m_top = nothing
-        m_cnt = 0
-    end sub
-
-    private sub class_terminate
-    end sub
-
-    public sub push(key, data)
-        dim temp : set temp = m_top
-        set m_top = (new titem).init(key, data)
-        set m_top.m_next = temp
-        m_cnt = m_cnt+1
-    end sub
-
-    public function pop()
-        dim temp : set temp = m_top
-        if not m_top is nothing then
-            set m_top = m_top.m_next
-        end if
-        m_cnt = m_cnt-1
-        set pop = temp
-    end function
-
-    public function count()
-        count = m_cnt
-    end function
 
 end class
 
