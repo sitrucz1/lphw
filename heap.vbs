@@ -32,16 +32,16 @@ option explicit
 '     end if
 ' end function
 
-class tdata
+' class tdata
 
-    public m_data
+'     public m_data
 
-    public function init(byval data)
-        m_data = data
-        set init = me
-    end function
+'     public function init(byval data)
+'         m_data = data
+'         set init = me
+'     end function
 
-end class
+' end class
 
 class theap
 
