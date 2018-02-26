@@ -12,9 +12,10 @@ option explicit
 '     heap.push((new tdata).init(3))
 '     heap.push((new tdata).init(13))
 '     heap.push((new tdata).init(12))
-'     heap.heapify
+'     ' heap.heapify
 '     wscript.echo heap.peek.m_data
 '     wscript.echo heap.isheap
+'     wscript.echo "length is: " & heap.length
 '     do while not heap.isempty
 '         wscript.echo heap.pop.m_data
 '         wscript.echo heap.isheap
@@ -78,6 +79,10 @@ class theap
 
     public function isempty
         isempty = (m_cnt = 0)
+    end function
+
+    public function length
+        length = m_cnt
     end function
 
     public function push(byval item)
