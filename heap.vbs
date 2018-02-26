@@ -5,48 +5,65 @@
 
 option explicit
 
-sub main()
-    dim heap : set heap = (new theap).init(1000, vbnull)
-    heap.enqueue(5)
-    heap.enqueue(10)
-    wscript.echo heap.dequeue
-end sub
+' sub main()
+'     dim heap : set heap = (new theap).init(1000, getref("mycompare"))
+'     heap.push((new tdata).init(5))
+'     heap.push((new tdata).init(10))
+'     heap.push((new tdata).init(3))
+'     heap.push((new tdata).init(13))
+'     heap.push((new tdata).init(12))
+'     heap.heapify
+'     wscript.echo heap.peek.m_data
+'     wscript.echo heap.isheap
+'     do while not heap.isempty
+'         wscript.echo heap.pop.m_data
+'         wscript.echo heap.isheap
+'     loop
+' end sub
+
+' function mycompare(byval a, byval b)
+'     ' Min heap: less than should be equal to 1.  Max heap: Greater than should be equal to 1.
+'     if a.m_data < b.m_data then
+'         mycompare = 1
+'     elseif a.m_data > b.m_data then
+'         mycompare = -1
+'     else
+'         mycompare = 0
+'     end if
+' end function
+
+class tdata
+
+    public m_data
+
+    public function init(byval data)
+        m_data = data
+        set init = me
+    end function
+
+end class
 
 class theap
 
     private m_items
     private m_size
     private m_cnt
-    public m_comparefunc
+    private m_comparefunc   ' use getref("mycomparefunc") in a non-class function
 
-    public function init(byval initsize, byref compfunc)
+    public function init(byval initsize, byref comparefunc)
         m_items = array()
         redim m_items(initsize-1)
         m_size = initsize
         m_cnt = 0
-        ' if isnull(compfunc) then
-            set m_comparefunc = getref("comparefunc")
-        ' else
-        '     m_comparefunc = compfunc
-        ' end if
+        set m_comparefunc = comparefunc
         set init = me
-    end function
-
-    public function comparefunc(byval a, byval b)
-        if a < b then
-            comparefunc = -1
-        elseif a = b then
-            comparefunc = 0
-        else
-            comparefunc = 1
-        end if
     end function
 
     public function isheap
         dim child
-        for child = cnt-1 to 1 step -1
+        for child = m_cnt-1 to 1 step -1
             dim root : root = (child-1) \ 2
-            if comparefunc(m_items(root), m_items(child)) < 0 then
+            if m_comparefunc(m_items(root), m_items(child)) < 0 then
                 wscript.echo "Parent and child mismatch: ", root, child
                 isheap = false
                 exit function
@@ -56,14 +73,14 @@ class theap
     end function
 
     public function isfull
-        isfull = false
+        isfull = (m_cnt = m_size)
     end function
 
     public function isempty
         isempty = (m_cnt = 0)
     end function
 
-    public function enqueue(byval item)
+    public function push(byval item)
         if isfull then
             m_size = m_size*2
             redim preserve m_items(m_size-1)
@@ -75,14 +92,14 @@ class theap
         end if
         siftup m_cnt
         m_cnt = m_cnt+1
-        enqueue = true
+        push = true
     end function
 
-    public function dequeue
+    public function pop
         if isobject(m_items(0)) then
-            set dequeue = m_items(0)
+            set pop = m_items(0)
         else
-            dequeue = m_items(0)
+            pop = m_items(0)
         end if
         if isobject(m_items(m_cnt-1)) then
             set m_items(0) = m_items(m_cnt-1)
@@ -111,7 +128,7 @@ class theap
         end if
         do while child < m_cnt
             if child+1 < m_cnt then   ' No short circuit boolean logic
-                if m_comparefunc(arr(child+1), arr(child)) > 0 then
+                if m_comparefunc(m_items(child+1), m_items(child)) > 0 then
                     child = child+1
                 end if
             end if
@@ -133,7 +150,7 @@ class theap
         end if
     end sub
 
-    sub siftup(byval child)
+    private sub siftup(byval child)
         dim parent, saved
         if isobject(m_items(child)) then
             set saved = m_items(child)
@@ -143,7 +160,7 @@ class theap
         do while child > 0
             parent = (child-1) \ 2
             if m_comparefunc(m_items(parent), saved) >= 0 then
-                break
+                exit do
             end if
             if isobject(m_items(parent)) then
                 set m_items(child) = m_items(parent)
@@ -159,13 +176,13 @@ class theap
         end if
     end sub
 
-    sub heapify(byval cnt)
+    public sub heapify
         dim root
-        for root = (cnt-2) \ 2 to 0 step -1
+        for root = (m_cnt-2) \ 2 to 0 step -1
             siftdown root
         next
     end sub
 
 end class
 
-call main()
+' call main()
