@@ -7,26 +7,28 @@ option explicit
 
 ' sub main()
 '     dim heap : set heap = (new theap).init(1000, getref("mycompare"))
-'     heap.push((new tdata).init(5))
-'     heap.push((new tdata).init(10))
-'     heap.push((new tdata).init(3))
-'     heap.push((new tdata).init(13))
-'     heap.push((new tdata).init(12))
-'     ' heap.heapify
-'     wscript.echo heap.peek.m_data
+'     dim arr : arr = array(5,10,3,13,12,9,2)
+'     heap.makeheap arr, ubound(arr)+1, true
+'     ' heap.push((new tdata).init(5))
+'     ' heap.push((new tdata).init(10))
+'     ' heap.push((new tdata).init(3))
+'     ' heap.push((new tdata).init(13))
+'     ' heap.push((new tdata).init(12))
+'     ' ' heap.heapify
+'     wscript.echo heap.peek
 '     wscript.echo heap.isheap
 '     wscript.echo "length is: " & heap.length
 '     do while not heap.isempty
-'         wscript.echo heap.pop.m_data
+'         wscript.echo heap.pop
 '         wscript.echo heap.isheap
 '     loop
 ' end sub
 
 ' function mycompare(byval a, byval b)
 '     ' Min heap: less than should be equal to 1.  Max heap: Greater than should be equal to 1.
-'     if a.m_data < b.m_data then
+'     if a < b then
 '         mycompare = 1
-'     elseif a.m_data > b.m_data then
+'     elseif a > b then
 '         mycompare = -1
 '     else
 '         mycompare = 0
@@ -179,6 +181,17 @@ class theap
         else
             m_items(child) = saved
         end if
+    end sub
+
+    public sub makeheap(byref arr, byval cnt, byval expand)
+        erase m_items
+        m_items = arr
+        if expand and ubound(m_items) < m_size then
+            redim preserve m_items(m_size-1)
+        end if
+        m_size = ubound(m_items)+1
+        m_cnt = cnt
+        heapify
     end sub
 
     public sub heapify
