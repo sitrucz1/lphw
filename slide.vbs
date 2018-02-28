@@ -8,7 +8,7 @@ includefile "slideboard.vbs"     ' tboard
 
 sub main()
     ' dim solver : set solver = new tslidesolver.init(4)
-    dim board : set board = (new tboard).init(9, vbnull, mvnull)
+    dim board : set board = (new tboard).init(3, vbnull, mvnull)
     ' board.printwalk
     board.shuffle
     board.printboard
