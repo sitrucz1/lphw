@@ -7,49 +7,44 @@ class tboard
 
     public m_degree
     public m_board
-    public m_walk
     public m_blank
-    public m_cost
 
-    public function init(byval degree, byval board, byval way)
-        if degree < 2 or degree > 5 then
-            m_degree = 3
-        else
-            m_degree = degree
-        end if
-        if isobject(board) then
-            set m_board = board.m_board
-            m_degree = board.m_degree
-            m_blank = board.m_blank
-            m_cost = board.m_cost
-        else
-            m_board = array()
-            redim m_board(m_degree*m_degree-1)
-            dim i
-            for i = 0 to m_degree*m_degree-2
-                m_board(i) = i+1
-            next
-            m_blank = m_degree*m_degree-1
-            m_board(m_blank) = 0
-        end if
-        if isobject(board) then
-            set m_walk = board.m_walk
-        else
-            m_walk = array()
-            redim m_walk(m_degree*m_degree-1, m_degree*m_degree-1)
-            dim j
-            for i = 0 to m_degree*m_degree-1
-                for j = 1 to m_degree*m_degree
-                    if i = 0 then
-                        m_walk(i, j-1) = 0
-                    else
-                        m_walk(i, j-1) = abs(getrow(i-1) - getrow(j-1)) + abs(getcol(i-1) - getcol(j-1))
-                    end if
-                next
-            next
-        end if
-        m_cost = getboardcost
+    public function init(byval degree)
+        m_degree = iif(degree < 2 or degree > 5, 3, degree)
+        m_board = makeboard(degree)
+        m_blank = degree*degree-1
+        ' wscript.echo join(m_board, " ")
         set init = me
+    end function
+
+    private function iif(byval condition, byval truecond, byval falsecond)
+        if condition then
+            iif = truecond
+        else
+            iif = falsecond
+        end if
+    end function
+
+    private function makeboard(byval degree)
+        dim i, arr()
+        redim arr(degree*degree-1)
+        for i = 0 to degree*degree-2
+            arr(i) = i+1
+        next
+        arr(degree*degree-1) = 0
+        makeboard = arr
+    end function
+
+    public function clone
+        dim board : set board = new tboard
+        board.m_degree = me.m_degree
+        board.m_board = me.m_board
+        board.m_blank = me.m_blank
+        set clone = board
+    end function
+
+    public function tostring
+        tostring = join(m_board, " ")
     end function
 
     public function movevalid(byval way)
@@ -81,7 +76,6 @@ class tboard
                 m_blank = m_blank+1
                 m_board(m_blank) = 0
         end select
-        m_cost = getboardcost
         move = true
     end function
 
@@ -139,31 +133,36 @@ class tboard
 
     public sub printboard
         dim i
+        wscript.echo "+" & string(3*m_degree-1, "-") & "---+"
         for i = 0 to m_degree*m_degree-1
+            if i mod (m_degree) = 0 then
+                wscript.stdout.write "|"
+            end if
             wscript.stdout.write lpad(m_board(i), 3, " ")
             if i mod m_degree = m_degree-1 then
-                wscript.stdout.writeline
+                wscript.stdout.writeline "  |"
             end if
         next
+        wscript.echo "+" & string(3*m_degree-1, "-") & "---+"
         wscript.stdout.writeline
     end sub
 
-    public sub printwalk
-        dim i, j
-        for i = 0 to m_degree*m_degree-1
-            for j = 0 to m_degree*m_degree-1
-                wscript.stdout.write lpad(m_walk(i, j), 3, " ")
-            next
-            wscript.stdout.writeline
-        next
-    end sub
+    ' public sub printwalk
+    '     dim i, j
+    '     for i = 0 to m_degree*m_degree-1
+    '         for j = 0 to m_degree*m_degree-1
+    '             wscript.stdout.write lpad(m_walk(i, j), 3, " ")
+    '         next
+    '         wscript.stdout.writeline
+    '     next
+    ' end sub
 
-    public function getboardcost
-        dim j, cost : cost = 0
-        for j = 0 to m_degree*m_degree-1
-            cost = cost + m_walk(m_board(j), j)
-        next
-        getboardcost = cost
-    end function
+    ' public function getboardcost
+    '     dim j, cost : cost = 0
+    '     for j = 0 to m_degree*m_degree-1
+    '         cost = cost + m_walk(m_board(j), j)
+    '     next
+    '     getboardcost = cost
+    ' end function
 
 end class
