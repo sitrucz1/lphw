@@ -13,7 +13,6 @@ class tboard
         m_degree = iif(degree < 2 or degree > 5, 3, degree)
         m_board = makeboard(degree)
         m_blank = degree*degree-1
-        ' wscript.echo join(m_board, " ")
         set init = me
     end function
 
