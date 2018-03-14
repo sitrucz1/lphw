@@ -9,27 +9,35 @@ includefile "slidecost.vbs"      ' board heuristics
 
 sub main()
     ' dim solver : set solver = new tslidesolver.init(4)
-    dim board : set board = (new tboard).init(4)
-    dim b2 : set b2 = board.clone
-    board.printboard
-    b2.move(mvleft)
-    b2.move(mvleft)
-    b2.move(mvup)
-    b2.move(mvup)
-    b2.printboard
-    wscript.echo board.tostring
-    wscript.echo b2.tostring
+    dim board : set board = (new tboard).init(3)
     dim cost : set cost = (new tcostmanhattan).init(board.m_degree)
-    ' cost.printwalk
-    wscript.echo cost.getcost(b2)
-    dim cost2 : set cost2 = new tcosthamming
-    wscript.echo cost2.getcost(b2)
-    ' board.printwalk
-    ' board.shuffle
-    ' board.printboard
-    ' wscript.echo board.m_cost
-    ' wscript.stdout.writeline board.issolvable
-    ' wscript.stdout.writeline board.issolved
+    board.shuffle
+    board.printboard
+    randomize
+    dim cnt : cnt = 0
+    dim prev : prev = mvnull
+    do until board.issolved
+        dim min : min = 99
+        dim minbd : set minbd = nothing
+        dim i, j
+        j = int(mvcnt * rnd)
+        for i = 0 to mvcnt-1
+            if board.movevalid(j) and j <> prev then
+                dim mv : set mv = board.clone
+                mv.move(j)
+                dim mvcost : mvcost = cost.getcost(mv) + cnt + 1
+                if mvcost < min then
+                    set minbd = mv
+                    min = mvcost
+                    prev = j
+                end if
+            end if
+            j = (j+1) mod mvcnt
+        next
+        cnt = cnt+1
+        set board = minbd
+        board.printboard
+    loop
 end sub
 
 sub includefile(fspec)
@@ -40,6 +48,28 @@ class tslidesolver
 
     public function init(byval degree)
         set init = me
+    end function
+
+end class
+
+class tslidestate
+
+    public m_cost
+    public m_moves
+    public m_board
+
+    public function init (byval cost, byval moves, byval board)
+        m_cost = cost
+        set m_moves = moves
+        set m_board = board
+    end function
+
+    public function clone
+        dim x : set x = new tslidestate
+        x.m_cost = m_cost
+        set x.m_moves = m_moves
+        set x.m_board = m_board
+        set clone = x
     end function
 
 end class
