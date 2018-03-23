@@ -11,7 +11,7 @@ sub main()
     ' dim arr, temp : arr = array(1,2,3,4,5,6,7,8,9,10)
     dim arr, temp
     dim i, tstart, tend, tsum : tsum = 0
-    for i = 1 to 25
+    for i = 1 to 50
         arr = makerandomarray(50000, 1, 100000)
         redim temp(ubound(arr))
         if ubound(arr) < 50 then
@@ -24,11 +24,13 @@ sub main()
         ' mergesort arr, temp, 0, ubound(arr)
         ' quicksortbasic arr, 0, ubound(arr)
         ' quicksortpivot arr, 0, ubound(arr)
-        quicksortpivotsent arr, 0, ubound(arr)
+        ' quicksortpivotsent arr, 0, ubound(arr)
+        ' quicksortpivotsentmid arr, 0, ubound(arr)
         ' quicksortpivotmid arr, 0, ubound(arr)
         ' quicksortpivotmedian3 arr, 0, ubound(arr)
         ' quicksort arr, 0, ubound(arr)
         ' quicksortdf arr, 0, ubound(arr)
+        quicksortlom arr, 0, ubound(arr)
         ' quicksortbent arr, 0, ubound(arr)
         tend = timer
         tsum = tsum + (tend-tstart)
@@ -37,7 +39,7 @@ sub main()
         end if
         wscript.echo "" & issorted(arr)
     next
-    wscript.echo tsum / 25
+    wscript.echo tsum / 50
 end sub
 
 function makerandomarray(byval n, byval lo, byval hi)
@@ -74,6 +76,22 @@ sub quicksortdf(byref arr(), byval lo, byval hi)
     loop
     if lo < i-1 then: quicksortdf arr, lo, i-1 :end if
     if j+1 < hi then: quicksortdf arr, j+1, hi :end if
+end sub
+
+sub quicksortlom(byref arr(), byval lo, byval hi)
+    if lo >= hi then: exit sub :end if
+    dim i, j, mi, p, temp : j = lo : mi = lo+(hi-lo)\2
+    temp = arr(lo) : arr(lo) = arr(mi) : arr(mi) = temp
+    p = arr(lo)
+    for i = lo+1 to hi
+        if arr(i) < p then
+            j = j+1
+            temp = arr(j) : arr(j) = arr(i) : arr(i) = temp
+        end if
+    next
+    arr(lo) = arr(j) : arr(j) = p
+    if lo < j-1 then: quicksortlom arr, lo, j-1 :end if
+    if j+1 < hi then: quicksortlom arr, j+1, hi :end if
 end sub
 
 sub quicksortbasic(byref arr(), byval lo, byval hi)
@@ -142,6 +160,26 @@ sub quicksortpivotmid(byref arr(), byval lo, byval hi)
     arr(lo) = arr(j) : arr(j) = p
     if lo < j-1 then: quicksortpivotmid arr, lo, j-1 :end if
     if j+1 < hi then: quicksortpivotmid arr, j+1, hi :end if
+end sub
+
+sub quicksortpivotsentmid(byref arr(), byval lo, byval hi)
+    if lo >= hi then: exit sub :end if
+    dim i, j, mi, p, temp : i = lo : j = hi+1 : mi = lo+(hi-lo)\2
+    temp = arr(lo) : arr(lo) = arr(mi) : arr(mi) = temp
+    if arr(lo) > arr(hi) then
+        temp = arr(lo) : arr(lo) = arr(hi) : arr(hi) = temp
+    end if
+    if lo+1 = hi then: exit sub :end if
+    p = arr(lo)
+    do
+        do: i = i+1 :loop while arr(i) < p
+        do: j = j-1 :loop while p < arr(j)
+        if i >= j then: exit do :end if
+        temp = arr(i) : arr(i) = arr(j) : arr(j) = temp
+    loop while true
+    arr(lo) = arr(j) : arr(j) = p
+    if lo < j-1 then: quicksortpivotsentmid arr, lo, j-1 :end if
+    if j+1 < hi then: quicksortpivotsentmid arr, j+1, hi :end if
 end sub
 
 sub quicksortpivotmedian3(byref arr(), byval lo, byval hi)
