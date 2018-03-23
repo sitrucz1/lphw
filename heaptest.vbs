@@ -9,7 +9,7 @@ includefile "heap.vbs"      ' theap
 
 sub main()
     dim heap : set heap = (new theap).init(1000, getref("mycompare"))
-    dim arr : arr = array(5,10,3,13,12,9,2)
+    dim arr : arr = array(5,10,3,13,12,9,2,19,21,7,4)
     heap.makeheap arr, ubound(arr)+1, true
     ' heap.push((new tdata).init(5))
     ' heap.push((new tdata).init(10))
@@ -17,12 +17,12 @@ sub main()
     ' heap.push((new tdata).init(13))
     ' heap.push((new tdata).init(12))
     ' ' heap.heapify
-    wscript.echo heap.peek
-    wscript.echo heap.isheap
+    wscript.echo "peek: " & heap.peek
+    wscript.echo "heap valid: " & heap.isheap
     wscript.echo "length is: " & heap.length
-    do while not heap.isempty
-        wscript.echo heap.pop
-        wscript.echo heap.isheap
+    do until heap.isempty
+        wscript.echo "pop: " & heap.pop
+        wscript.echo "heap valid: " & heap.isheap
     loop
 end sub
 
