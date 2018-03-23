@@ -14,7 +14,12 @@ void quicksortlom(int *, int, int);
 
 int main(int argc, char **argv)
 {
-    int a[MAX];
+    int *a = NULL;
+
+    if ((a = (int *) malloc(MAX * sizeof(int))) == NULL) {
+        printf("Array could not be allocated.");
+        exit(1);
+    }
 
     srand(time(NULL));
     for (int i = 0; i < MAX; i++) {
@@ -23,14 +28,16 @@ int main(int argc, char **argv)
     }
     printf("\n");
 
-    /* quicksort(a, 0, MAX-1); */
-    quicksortlom(a, 0, MAX-1);
+    quicksort(a, 0, MAX-1);
+    /* quicksortlom(a, 0, MAX-1); */
     assert(issorted(a, MAX));
 
     for (int i = 0; i < MAX; i++)
         printf("%d ", a[i]);
     printf("\n");
     printf("%d\n", issorted(a, MAX));
+    free(a);
+    a = NULL;
 }
 
 void quicksort(int *a, int l, int r)
@@ -63,14 +70,11 @@ void quicksortlom(int *a, int l, int r)
         return;
     swap(&a[l], &a[l+(r-l)/2]);
     int j = l, p = a[l];
-    printf("%d %d %d\n", l, r, p);
     for (int i = l+1; i <= r; i++)
         if (a[i] < p) {
-            printf(" %d %d\n", i, j);
             swap(&a[++j], &a[i]);
         }
     swap(&a[l], &a[j]);
-    printf("  %d\n", j);
     quicksortlom(a, l, j-1);
     quicksortlom(a, j+1, r);
 }
