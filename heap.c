@@ -2,14 +2,26 @@
 #include <stdlib.h>
 #include <assert.h>
 
-typedef struct heap {
+typedef struct {
     int m_cnt;
     int m_size;
     int *m_arr;
 } theap;
 
-void main(void)
+theap *heap_init(int);
+int heap_isfull(theap *);
+int heap_isempty(theap *);
+void heap_siftdown(theap *, int);
+void heap_siftup(theap *, int);
+int heap_push(theap *, int);
+int heap_pop(theap *);
+int heap_length(theap *);
+void heap_terminate(theap *);
+void heap_heapify(theap *);
+
+int main(int argc, char *argv[])
 {
+    return 0;
 }
 
 theap *heap_init(int size)
@@ -34,7 +46,7 @@ void heap_siftdown(theap *heap, int root)
 {
     int child, saved, firstleaf;
     assert(root >= 0 && root < heap->m_cnt);
-    saved = heap->m_arr[root]
+    saved = heap->m_arr[root];
     firstleaf = heap->m_cnt/2;
     while (root < firstleaf) {
         child = root*2+1;
@@ -64,7 +76,7 @@ void heap_siftup(theap *heap, int root)
 
 int heap_push(theap *heap, int item)
 {
-    if (heap_isfull(heap))
+    if (heap_isfull(heap)) {
         heap->m_size *= 2;
         heap->m_arr = (int *) realloc(heap->m_arr, heap->m_size * sizeof(int));
         if (heap->m_arr == NULL) {
@@ -73,7 +85,7 @@ int heap_push(theap *heap, int item)
         }
     }
     heap->m_arr[heap->m_cnt] = item;
-    (heap->m_cnt)++
+    (heap->m_cnt)++;
     heap_siftup(heap, heap->m_cnt-1);
     return 1;
 }
@@ -85,8 +97,8 @@ int heap_pop(theap *heap)
         exit(1);
     }
     int temp = heap->m_arr[0];
-    heap->m_arr[0] = heap->m_arr[heap->m_cnt-1]
-    (heap->m_cnt)--;
+    heap->m_arr[0] = heap->m_arr[heap->m_cnt-1];
+    heap->m_cnt--;
     heap_siftdown(heap, 0);
     return temp;
 }
@@ -108,8 +120,8 @@ int heap_length(theap *heap)
 
 void heap_terminate(theap *heap)
 {
-    free(theap->m_arr);
-    theap->m_arr = NULL;
+    free(heap->m_arr);
+    heap->m_arr = NULL;
 }
 
 void heap_heapify(theap *heap)
