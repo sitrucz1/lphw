@@ -1,40 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
-typedef struct {
-    int m_cnt;
-    int m_size;
-    int *m_arr;
-} theap;
-
-theap *heap_init(int);
-int heap_isfull(theap *);
-int heap_isempty(theap *);
-void heap_siftdown(theap *, int);
-void heap_siftup(theap *, int);
-int heap_push(theap *, int);
-int heap_pop(theap *);
-int heap_length(theap *);
-void heap_terminate(theap *);
-void heap_heapify(theap *);
+#include "heap.h"
 
 int main(int argc, char *argv[])
 {
     return 0;
 }
 
-theap *heap_init(int size)
+theap *heap_init(int initsize)
 {
-    theap *heap;
-    heap = (theap *) malloc(sizeof(theap));
+    theap *heap = (theap *) malloc(sizeof(theap));
     if (heap == NULL) {
         printf("Unable to allocate a pointer to theap.\n");
         exit(1);
     }
     heap->m_cnt = 0;
-    heap->m_size = size;
-    heap->m_arr = (int *) malloc(size * sizeof(int));
+    heap->m_size = initsize;
+    heap->m_arr = (int *) malloc(initsize * sizeof(int));
     if (heap->m_arr == NULL) {
         printf("Could not allocate memory for the array on the heap with malloc.\n");
         exit(1);
@@ -44,12 +27,10 @@ theap *heap_init(int size)
 
 void heap_siftdown(theap *heap, int root)
 {
-    int child, saved, firstleaf;
+    int saved = heap->m_arr[root], firstleaf = heap->m_cnt/2;
     assert(root >= 0 && root < heap->m_cnt);
-    saved = heap->m_arr[root];
-    firstleaf = heap->m_cnt/2;
     while (root < firstleaf) {
-        child = root*2+1;
+        int child = root*2+1;
         if (child+1 < heap->m_cnt && heap->m_arr[child] > heap->m_arr[child+1])
             child++;
         if (heap->m_arr[child] >= saved)
@@ -62,10 +43,9 @@ void heap_siftdown(theap *heap, int root)
 
 void heap_siftup(theap *heap, int root)
 {
-    int saved, parent;
-    saved = heap->m_arr[root];
+    int saved = heap->m_arr[root];
     while (root) {
-        parent = (root-1)/2;
+        int parent = (root-1)/2;
         if (saved >= heap->m_arr[parent])
             break;
         heap->m_arr[root] = heap->m_arr[parent];
@@ -98,7 +78,7 @@ int heap_pop(theap *heap)
     }
     int temp = heap->m_arr[0];
     heap->m_arr[0] = heap->m_arr[heap->m_cnt-1];
-    heap->m_cnt--;
+    (heap->m_cnt)--;
     heap_siftdown(heap, 0);
     return temp;
 }
@@ -122,6 +102,8 @@ void heap_terminate(theap *heap)
 {
     free(heap->m_arr);
     heap->m_arr = NULL;
+    free(heap);
+    heap = NULL;
 }
 
 void heap_heapify(theap *heap)
@@ -129,5 +111,18 @@ void heap_heapify(theap *heap)
     if (heap->m_cnt > 1)
         for (int i = (heap->m_cnt-2) / 2; i >= 0; i--)
             heap_siftdown(heap, i);
+}
+
+void heap_print(theap *heap)
+{
+    int nextlevel = 1;
+    for (int i = 0; i < heap->m_cnt; i++) {
+        if (i == nextlevel) {
+            printf("\n");
+            nextlevel = nextlevel*2+1;
+        }
+        printf("%d ", heap->m_arr[i]);
+    }
+    printf("\n");
 }
 
