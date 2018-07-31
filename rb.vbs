@@ -8,8 +8,10 @@ sub main()
     dim i, arr : arr = array(5,3,7,1,4,9,11,13,15,2)
     dim tree : set tree = new trbtree
     randomize timer
-    for i=1 to 20
-        tree.rbputi(cint(rnd*1000))
+    ' for i=1 to 2000
+    for i = 0 to ubound(arr)
+        tree.rbputi(arr(i))
+        ' tree.rbputi(cint(rnd*1000))
         ' tree.print
         ' if not tree.isrbtree then
         '     exit for
@@ -21,7 +23,7 @@ sub main()
     wscript.stdin.read(1)
     do until tree.isempty or not tree.isrbtree
         tree.rbdeletei(tree.m_root.m_data)
-        ' tree.print
+        tree.print
     loop
 end sub
 
@@ -283,7 +285,7 @@ class trbtree
             set q = node.m_child(1)
         end if
         ' node is to be deleted and q is successor node
-        if not node is m_root and not isred(node) and not isred(q) then
+        if not isred(q) then
             rbdeleteifixup node
         end if
         ' splice out node
@@ -296,7 +298,7 @@ class trbtree
         ' update pointers
         if not q is nothing then
             set q.m_parent = node.m_parent
-            q.m_color = black
+            q.m_color = node.m_color
         end if
         ' update root
         if not m_root is nothing then
@@ -308,7 +310,7 @@ class trbtree
 
     private sub rbdeleteifixup(byval node)
         dim db : set db = node
-        do
+        do until db is m_root or isred(db)
             dim parent : set parent = db.m_parent
             dim way : way = (db is parent.m_child(1)) and 1
             dim sib : set sib = parent.m_child(way xor 1)
@@ -321,10 +323,6 @@ class trbtree
             if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
                 wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", parent.m_data, way
                 sib.m_color = red
-                if isred(parent) or parent is m_root then
-                    parent.m_color = black
-                    exit do
-                end if
                 set db = parent
             else
                 if isred(sib.m_child(way)) then                             ' case 3 - lr/rl sibling red child - rotate
@@ -335,9 +333,10 @@ class trbtree
                 set parent = rotate(parent, way)                            ' case 4 - ll/rr sibling red child - rotate
                 parent.m_child(0).m_color = black
                 parent.m_child(1).m_color = black
-                exit do
+                set db = m_root
             end if
-        loop until false
+        loop
+        db.m_color = black
     end sub
 
     public sub preorderr()
