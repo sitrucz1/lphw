@@ -8,10 +8,10 @@ sub main()
     dim i, arr : arr = array(5,3,7,1,4,9,11,13,15,2)
     dim tree : set tree = new trbtree
     randomize timer
-    ' for i=1 to 2000
-    for i = 0 to ubound(arr)
-        tree.rbputi(arr(i))
-        ' tree.rbputi(cint(rnd*1000))
+    for i=1 to 20
+    ' for i = 0 to ubound(arr)
+        ' tree.rbputi(arr(i))
+        tree.rbputi(cint(rnd*1000))
         ' tree.print
         ' if not tree.isrbtree then
         '     exit for
@@ -23,7 +23,7 @@ sub main()
     wscript.stdin.read(1)
     do until tree.isempty or not tree.isrbtree
         tree.rbdeletei(tree.m_root.m_data)
-        tree.print
+        ' tree.print
     loop
 end sub
 
@@ -285,6 +285,7 @@ class trbtree
             set q = node.m_child(1)
         end if
         ' node is to be deleted and q is successor node
+        dim color_save : color_save = node.m_color
         if not isred(q) then
             rbdeleteifixup node
         end if
@@ -298,7 +299,7 @@ class trbtree
         ' update pointers
         if not q is nothing then
             set q.m_parent = node.m_parent
-            q.m_color = node.m_color
+            q.m_color = color_save
         end if
         ' update root
         if not m_root is nothing then
@@ -325,7 +326,7 @@ class trbtree
                 sib.m_color = red
                 set db = parent
             else
-                if isred(sib.m_child(way)) then                             ' case 3 - lr/rl sibling red child - rotate
+                if not isred(sib.m_child(way xor 1)) then                   ' case 3 - lr/rl sibling red child - rotate
                     wscript.echo "case 3 - lr/rl sibling red child - rotate", parent.m_child(way xor 1).m_data, way xor 1
                     set parent.m_child(way xor 1) = rotate(parent.m_child(way xor 1), way xor 1)
                 end if
