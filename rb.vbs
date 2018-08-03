@@ -282,7 +282,6 @@ class trbtree
             set q = node.m_child(1)
         end if
         ' node is to be deleted and q is successor node
-        dim color_save : color_save = node.m_color
         if not isred(q) then
             rbdeleteifixup node
         end if
@@ -296,7 +295,7 @@ class trbtree
         ' update pointers
         if not q is nothing then
             set q.m_parent = node.m_parent
-            q.m_color = color_save
+            q.m_color = black
         end if
         ' update root
         if not m_root is nothing then
