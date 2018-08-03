@@ -306,34 +306,32 @@ class trbtree
     end function
 
     private sub rbdeleteifixup(byval node)
-        dim db : set db = node
-        do until db is m_root or isred(db)
-            dim parent : set parent = db.m_parent
-            dim way : way = (db is parent.m_child(1)) and 1
-            dim sib : set sib = parent.m_child(way xor 1)
+        do until node is m_root or isred(node)
+            dim way : way = (node is node.m_parent.m_child(1)) and 1
+            dim sib : set sib = node.m_parent.m_child(way xor 1)
             if isred(sib) then                                              ' case 1 - red sibling case reduction
-                wscript.echo "case 1 - red sibling case reduction - rotate", parent.m_data, way
-                set parent = rotate(parent, way)
-                set parent = db.m_parent
-                set sib = parent.m_child(way xor 1)
+                wscript.echo "case 1 - red sibling case reduction - rotate", node.m_parent.m_data, way
+                rotate node.m_parent, way
+                set sib = node.m_parent.m_child(way xor 1)
             end if
             if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
-                wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", parent.m_data, way
+                wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", node.m_parent.m_data, way
                 sib.m_color = red
-                set db = parent
+                set node = node.m_parent
             else
                 if not isred(sib.m_child(way xor 1)) then                   ' case 3 - lr/rl sibling red child - rotate
-                    wscript.echo "case 3 - lr/rl sibling red child - rotate", parent.m_child(way xor 1).m_data, way xor 1
-                    set parent.m_child(way xor 1) = rotate(parent.m_child(way xor 1), way xor 1)
+                    wscript.echo "case 3 - lr/rl sibling red child - rotate", sib.m_data, way xor 1
+                    rotate sib, way xor 1
+                    set sib = sib.m_parent
                 end if
-                wscript.echo "case 4 - ll/rr sibling red child - rotate", parent.m_data, way
-                set parent = rotate(parent, way)                            ' case 4 - ll/rr sibling red child - rotate
-                parent.m_child(0).m_color = black
-                parent.m_child(1).m_color = black
-                set db = m_root
+                wscript.echo "case 4 - ll/rr sibling red child - rotate", sib.m_parent.m_data, way
+                rotate sib.m_parent, way                                    ' case 4 - ll/rr sibling red child - rotate
+                sib.m_child(0).m_color = black
+                sib.m_child(1).m_color = black
+                set node = m_root
             end if
         loop
-        db.m_color = black
+        node.m_color = black
     end sub
 
     public sub preorderr()
