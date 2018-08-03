@@ -5,13 +5,13 @@ const black = false
 
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
-    dim i, arr : arr = array(5,3,7,1,4,9,11,13,15,2)
+    dim i, arr : arr = array(5,3,4,7,1,9,11,13,15,2)
     dim tree : set tree = new trbtree
     randomize timer
-    for i=1 to 20
-    ' for i = 0 to ubound(arr)
-        ' tree.rbputi(arr(i))
-        tree.rbputi(cint(rnd*1000))
+    ' for i=1 to 20
+    for i = 0 to ubound(arr)
+        tree.rbputi(arr(i))
+        ' tree.rbputi(cint(rnd*1000))
         ' tree.print
         ' if not tree.isrbtree then
         '     exit for
@@ -23,7 +23,7 @@ sub main()
     wscript.stdin.read(1)
     do until tree.isempty or not tree.isrbtree
         tree.rbdeletei(tree.m_root.m_data)
-        ' tree.print
+        tree.print
     loop
 end sub
 
@@ -230,31 +230,28 @@ class trbtree
         end if
         ' rebalance
         rbputifixup node
-        ' update root
-        m_root.m_color = black
         m_cnt = m_cnt+1
         set rbputi = inserted
     end function
 
     private sub rbputifixup(byval node)
-        dim parent : set parent = node.m_parent
-        do while isred(parent)
-            dim gparent : set gparent = parent.m_parent
-            dim way : way = (gparent.m_child(1) is parent) and 1
-            if isred(gparent.m_child(way xor 1)) then    ' case 1 - color flip
-                wscript.echo "Case 1 - Color Flip", gparent.m_data
-                colorflip gparent
-                set parent = gparent.m_parent
+        do while isred(node.m_parent)
+            dim way : way = (node.m_parent.m_parent.m_child(1) is node.m_parent) and 1
+            if isred(node.m_parent.m_parent.m_child(way xor 1)) then    ' case 1 - color flip
+                wscript.echo "Case 1 - Color Flip", node.m_parent.m_parent.m_data
+                colorflip node.m_parent.m_parent
+                set node = node.m_parent.m_parent
             else
-                if isred(parent.m_child(way xor 1)) then ' case 2 - rotate l/r or r/l
-                    wscript.echo "Case 2 - Rotate", gparent.m_child(way).m_data, way
-                    set gparent.m_child(way) = rotate(gparent.m_child(way), way)
+                if isred(node.m_parent.m_child(way xor 1)) then         ' case 2 - rotate l/r or r/l
+                    set node = node.m_parent
+                    wscript.echo "Case 2 - Rotate", node.m_data, way
+                    rotate node, way
                 end if
-                wscript.echo "Case 3 - Rotate", gparent.m_data, way xor 1
-                set gparent = rotate(gparent, way xor 1) ' case 3 - rotate ll or rr
-                exit do
+                wscript.echo "Case 3 - Rotate", node.m_parent.m_parent.m_data, way xor 1
+                rotate node.m_parent.m_parent, way xor 1                ' case 3 - rotate ll or rr
             end if
         loop
+        m_root.m_color = black
     end sub
 
     public function rbdeletei(byval data)
