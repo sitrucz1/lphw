@@ -322,12 +322,12 @@ class trbtree
                 if not isred(sib.m_child(way xor 1)) then                   ' case 3 - lr/rl sibling red child - rotate
                     wscript.echo "case 3 - lr/rl sibling red child - rotate", sib.m_data, way xor 1
                     rotate sib, way xor 1
-                    set sib = sib.m_parent
+                    set sib = node.m_parent.m_child(way xor 1)
                 end if
-                wscript.echo "case 4 - ll/rr sibling red child - rotate", sib.m_parent.m_data, way
-                rotate sib.m_parent, way                                    ' case 4 - ll/rr sibling red child - rotate
-                sib.m_child(0).m_color = black
-                sib.m_child(1).m_color = black
+                wscript.echo "case 4 - ll/rr sibling red child - rotate", node.m_parent.m_data, way
+                rotate node.m_parent, way                                   ' case 4 - ll/rr sibling red child - rotate
+                node.m_parent.m_color = black
+                node.m_parent.m_parent.m_child(way xor 1).m_color = black
                 set node = m_root
             end if
         loop
