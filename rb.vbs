@@ -220,7 +220,6 @@ class trbtree
             rbputi = node
             exit function
         end if
-        dim inserted : set inserted = node ' save a pointer to inserted node
         ' update the tree
         set node.m_parent = parent
         if parent is nothing then
@@ -231,7 +230,7 @@ class trbtree
         ' rebalance
         rbputifixup node
         m_cnt = m_cnt+1
-        set rbputi = inserted
+        set rbputi = node
     end function
 
     private sub rbputifixup(byval node)
@@ -297,10 +296,6 @@ class trbtree
             set q.m_parent = node.m_parent
             q.m_color = black
         end if
-        ' update root
-        if not m_root is nothing then
-            m_root.m_color = black
-        end if
         m_cnt = m_cnt-1
         set rbdeletei = node
     end function
@@ -322,7 +317,7 @@ class trbtree
                 if not isred(sib.m_child(way xor 1)) then                   ' case 3 - lr/rl sibling red child - rotate
                     wscript.echo "case 3 - lr/rl sibling red child - rotate", sib.m_data, way xor 1
                     rotate sib, way xor 1
-                    set sib = node.m_parent.m_child(way xor 1)
+                    ' set sib = node.m_parent.m_child(way xor 1)
                 end if
                 wscript.echo "case 4 - ll/rr sibling red child - rotate", node.m_parent.m_data, way
                 rotate node.m_parent, way                                   ' case 4 - ll/rr sibling red child - rotate
