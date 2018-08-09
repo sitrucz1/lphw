@@ -1,119 +1,53 @@
 option explicit
 
+const red = true
+const black = false
+
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
-    dim tree : set tree = new tbst
-    set tree.m_root = (new tbstnode).init(5)
-    set tree.m_root.m_child(0) = (new tbstnode).init(3)
-    set tree.m_root.m_child(0).m_child(0) = (new tbstnode).init(1)
-    set tree.m_root.m_child(0).m_child(1) = (new tbstnode).init(4)
-    set tree.m_root.m_child(0).m_child(0).m_child(1) = (new tbstnode).init(2)
-    set tree.m_root.m_child(1) = (new tbstnode).init(7)
-    set tree.m_root.m_child(1).m_child(1) = (new tbstnode).init(10)
-    set tree.m_root.m_child(1).m_child(1).m_child(1) = (new tbstnode).init(15)
-    set tree.m_root.m_child(1).m_child(1).m_child(0) = (new tbstnode).init(8)
-    set tree.m_root.m_child(1).m_child(1).m_child(0).m_child(1) = (new tbstnode).init(9)
-    set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1) = (new tbstnode).init(18)
-    set tree.m_root.m_child(1).m_child(1).m_child(1).m_child(1).m_child(1) = (new tbstnode).init(19)
-    '      5
-    '    /   \
-    '   3     7
-    '  / \     \
-    ' 1   4    10
-    ' \       / \
-    '  2     8  15
-    '        \   \
-    '         9  18
-    '             \
-    '             19
-    tree.preorderr
-    tree.preorderi
-    tree.preorderiw
-    tree.inorderr
-    tree.inorderi
-    tree.inorderiw
-    tree.postorderr
-    tree.postorderi
-    tree.postorderiw
-    tree.levelorderi
-    wscript.echo tree.heightr
-    wscript.echo tree.heighti
-    wscript.echo tree.heightiq
-    wscript.echo tree.isbst(tree.m_root)
-    tree.bstdsw
-    tree.levelorderi
-    wscript.echo tree.isbst(tree.m_root)
-    wscript.echo tree.heightiq
-    wscript.quit
-    if tree.bstfindr(7) is nothing then
-        wscript.echo "not found"
-    else
-        wscript.echo "found"
-    end if
-    if tree.bstfindr(2) is nothing then
-        wscript.echo "not found"
-    else
-        wscript.echo "found"
-    end if
-    if tree.bstfindr(6) is nothing then
-        wscript.echo "not found"
-    else
-        wscript.echo "found"
-    end if
-    if tree.bstfindi(2) is nothing then
-        wscript.echo "not found"
-    else
-        wscript.echo "found"
-    end if
-    set tree = nothing
-    set tree = new tbst
-    tree.bstputr(5)
-    tree.bstputr(4)
-    tree.bstputr(1)
-    tree.bstputr(2)
-    tree.bstputr(7)
-    tree.bstputr(7)
-    tree.levelorderi
-    tree.bstdeleter(2)
-    tree.levelorderi
-    tree.bstdeleter(5)
-    tree.levelorderi
-    wscript.echo tree.isbst(tree.m_root)
-    set tree = nothing
-    set tree = new tbst
-    tree.bstputi(5)
-    tree.bstputi(4)
-    tree.bstputi(1)
-    tree.bstputi(2)
-    tree.bstputi(7)
-    tree.levelorderi
-    wscript.echo tree.isbst(tree.m_root)
-    tree.bstdeletei(1)
-    tree.levelorderi
-    tree.bstdeletei(5)
-    tree.levelorderi
-    wscript.echo tree.isbst(tree.m_root)
+    dim i, arr : arr = array(5,3,4,7,1,9,11,13,15,2)
+    dim tree : set tree = new trbtree
+    randomize timer
+    ' for i=1 to 20
+    for i = 0 to ubound(arr)
+        tree.rbputi(arr(i))
+        ' tree.rbputi(cint(rnd*1000))
+        tree.print
+        if not tree.isrbtree then
+            exit for
+        end if
+    next
+    tree.print
+    tree.isrbtree
+    wscript.stdout.write "Press enter to continue..."
+    wscript.stdin.read(1)
+    do until tree.isempty or not tree.isrbtree
+        tree.rbdeletei(tree.m_root.m_data)
+        tree.print
+    loop
 end sub
 
 sub includefile(fspec)
     executeglobal createobject("scripting.filesystemobject").opentextfile(fspec).readall()
 end sub
 
-class tbstnode
+class trbnode
 
     public m_data
-    public m_child(1)
+    public m_child(1) '0-left, 1-right
+    public m_color
 
     public function init(byval data)
         m_data = data
         set m_child(0) = nothing
         set m_child(1) = nothing
+        m_color = red
         set init = me
     end function
 
 end class
 
-class tbst
+class trbtree
 
     public m_root
     public m_cnt
@@ -123,7 +57,15 @@ class tbst
         m_cnt = 0
     end sub
 
-    private function isless(a, b)
+    private function iif(byval condition, byval a, byval b)
+        if condition then
+            iif = a
+        else
+            iif = b
+        end if
+    end function
+
+    private function isless(byval a, byval b)
         if a is nothing or b is nothing then
             isless = false
         else
@@ -139,84 +81,98 @@ class tbst
         end if
     end function
 
-    public function isbst(node)
+    private function isred(byval node)
         if node is nothing then
-            isbst = true
+            isred = false
+        else
+            isred = (node.m_color = red)
+        end if
+    end function
+
+    private function color2char(byval node)
+        if node is nothing then
+            color2char = "b"
+        elseif isred(node) then
+            color2char = "r"
+        else
+            color2char = "b"
+        end if
+    end function
+
+    public function isempty
+        isempty = (m_root is nothing)
+    end function
+
+    public function isrbtree()
+        isrbtree = (isrbnode(m_root) <> -1)
+    end function
+
+    private function isrbnode(node)
+        if node is nothing then
+            isrbnode = 0
+        elseif node is m_root and isred(node) then
+            wscript.echo "ERROR: root is red", node.m_data
+            isrbnode = -1
         elseif isless(node, node.m_child(0)) or isless(node.m_child(1), node) then
-            wscript.echo "ERROR: not a BST"
-            isbst = false
+            wscript.echo "ERROR: not a BST", node.m_data
+            isrbnode = -1
+        elseif isred(node) and (isred(node.m_child(0)) or isred(node.m_child(1))) then
+            wscript.echo "ERROR: two red nodes in a row", node.m_data
+            isrbnode = -1
         else
-            isbst = isbst(node.m_child(0)) and isbst(node.m_child(1))
+            dim lh, rh
+            lh = isrbnode(node.m_child(0))
+            rh = isrbnode(node.m_child(1))
+            if lh = -1 or rh = -1 then
+                isrbnode = -1
+            elseif lh <> rh then
+                wscript.echo "ERROR: black heights don't match", node.m_data
+                isrbnode = -1
+            elseif isred(node) then
+                isrbnode = lh
+            else ' black node
+                isrbnode = lh+1
+            end if
         end if
     end function
 
-    public function rotate(byval node, byval way)
-        dim root : set root = node.m_child(way xor 1)
-        set node.m_child(way xor 1) = root.m_child(way)
-        set root.m_child(way) = node
-        set rotate = root
-    end function
-
-    public function bstfindr(data)
-        set bstfindr = bstfindnoder(m_root, data)
-    end function
-
-    private function bstfindnoder(byval node, byval data)
-        if node is nothing then
-            set bstfindnoder = node
-        elseif node.m_data = data then
-            set bstfindnoder = node
-        else
-            dim way : way = (node.m_data < data) and 1
-            set bstfindnoder = bstfindnoder(node.m_child(way), data)
+    public sub print()
+        dim queue : set queue = new tqueue
+        if m_root is nothing then
+            exit sub
         end if
-    end function
-
-    public sub bstdsw
-        ' Day-Stout-Warren Algorithm
-        dim head, node, parent, n, i, j
-        set head = (new tbstnode).init(0)
-        set head.m_child(1) = m_root
-
-        ' create the vine to the right
-        set parent = head
-        set node = head.m_child(1)
-        do until node is nothing
+        queue.enqueue m_root
+        dim lcnt : lcnt = queue.length
+        do until queue.isempty
+            dim node : set node = queue.dequeue
+            wscript.stdout.write node.m_data & "," & color2char(node) & " "
             if not node.m_child(0) is nothing then
-                set node = rotate(node, 1)
-                set parent.m_child(1) = node
-            else
-                set parent = node
-                set node = node.m_child(1)
+                queue.enqueue node.m_child(0)   ' left child
+            end if
+            if not node.m_child(1) is nothing then
+                queue.enqueue node.m_child(1)   ' right child
+            end if
+            lcnt = lcnt-1
+            if lcnt = 0 then        ' all done with current level
+                wscript.stdout.writeline
+                lcnt = queue.length ' set level count to next level size
             end if
         loop
-
-        ' count the nodes
-        n = 0
-        set node = head.m_child(1)
-        do until node is nothing
-            n = n+1
-            set node = node.m_child(1)
-        loop
-
-        ' balance the tree
-        for i = 1 to int(log(n) / log(2))
-            set parent = head
-            set node = head.m_child(1)
-            for j = 1 to (n-1) \ 2
-                set node = rotate(node, 0)
-                set parent.m_child(1) = node
-                set parent = node
-                set node = node.m_child(1)
-            next
-            n = n \ 2
-        next
-
-        ' update root
-        set m_root = head.m_child(1)
+        wscript.stdout.writeline
     end sub
 
-    public function bstfindi(data)
+    public function rbheadnode
+        dim node : set node = (new trbnode).init(0)
+        if node is nothing then
+            set rbheadnode = node
+            exit function
+        end if
+        set node.m_child(1) = m_root
+        node.m_color = black
+        set rbheadnode = node
+    end function
+
+    public function rbfindi(data)
         dim node : set node = m_root
         do until node is nothing
             if node.m_data = data then
@@ -225,113 +181,168 @@ class tbst
             dim way : way = (node.m_data < data) and 1
             set node = node.m_child(way)
         loop
-        set bstfindi = node
+        set rbfindi = node
     end function
 
-    public function bstputr(byval data)
-        set m_root = bstputitemr(m_root, data)
-        set bstputr = m_root
+    public function rotate(byval node, byval way)
+        dim root : set root = node.m_child(way xor 1)
+        set node.m_child(way xor 1) = root.m_child(way)
+        set root.m_child(way) = node
+        root.m_color = node.m_color
+        node.m_color = red
+        set rotate = root
     end function
 
-    private function bstputitemr(byval node, byval data)
-        if node is nothing then
-            set node = (new tbstnode).init(data)
-            set bstputitemr = node
-        elseif node.m_data = data then
-            set bstputitemr = node
-        else
-            dim way : way = (node.m_data < data) and 1
-            set node.m_child(way) = bstputitemr(node.m_child(way), data)
-            set bstputitemr = node
-        end if
-    end function
+    private sub colorflip(byval node)
+        node.m_color = not node.m_color
+        node.m_child(0).m_color = not node.m_color
+        node.m_child(1).m_color = not node.m_color
+    end sub
 
-    public function bstputi(byval data)
-        dim node, parent, way : set node = m_root : set parent = nothing
+    public function rbputi(byval data)
+        wscript.echo "Insert", data
+        dim node, na(50), wa(50), i ' na - node array, wa - way array, i - stack cnt
+        i = 0
+        set na(i) = rbheadnode ' fake head where right child points to root of tree
+        wa(i) = 1
+        set node = m_root
         do until node is nothing
             if node.m_data = data then
-                set bstputi = node
+                set rbputi = node
                 exit function
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            i = i+1
+            set na(i) = node
+            wa(i) = (node.m_data < data) and 1
+            set node = node.m_child(wa(i))
         loop
-        set node = (new tbstnode).init(data)
-        if parent is nothing then
-            set m_root = node
-        else
-            set parent.m_child(way) = node
-        end if
-        set bstputi = node
-    end function
-
-    public function bstdeleter(byval data)
-        set m_root = bstdeleteitemr(m_root, data)
-        set bstdeleter = m_root
-    end function
-
-    private function bstdeleteitemr(byval node, byval data)
+        ' create the node
+        set node = (new trbnode).init(data)
         if node is nothing then
-            set bstdeleteitemr = node
-        elseif node.m_data <> data then
-            dim way : way = (node.m_data < data) and 1
-            set node.m_child(way) = bstdeleteitemr(node.m_child(way), data)
-            set bstdeleteitemr = node
-        else ' found it
-            if node.m_child(0) is nothing then  ' one child
-                set bstdeleteitemr = node.m_child(1)
-            elseif node.m_child(1) is nothing then  ' one child
-                set bstdeleteitemr = node.m_child(0)
-            else ' 2 children
-                dim succ : set succ = node.m_child(1)
-                do until succ.m_child(0) is nothing
-                    set succ = succ.m_next(0)
-                loop
-                node.m_data = succ.m_data
-                set node.m_child(1) = bstdeleteitemr(node.m_child(1), succ.m_data)
-                set bstdeleteitemr = node
-            end if
+            wscript.stdout.writeline "node could not be allocated."
+            rbputi = node
+            exit function
         end if
+        i = i+1
+        set na(i) = node
+        wa(i) = (node.m_data < data) and 1
+        set na(i-1).m_child(wa(i-1)) = node
+        ' rebalance
+        rbputifixup na, wa, i
+        m_cnt = m_cnt+1
+        set rbputi = node
     end function
 
-    public function bstdeletei(byval data)
-        dim node, parent, q, way : set node = m_root : set parent = nothing
-        do until node is nothing
+    private sub rbputifixup(byref na(), byref wa(), byval i)
+        do while isred(na(i-1))
+            if isred(na(i-2).m_child(wa(i-2) xor 1)) then         ' case 1 - color flip
+                wscript.echo "Case 1 - Color Flip", na(i-2).m_data
+                colorflip na(i-2)
+                i = i-2 ' set to grandparent
+            else
+                if wa(i-1) <> wa(i-2) then                  ' case 2 - rotate l/r or r/l
+                    wscript.echo "Case 2 - Rotate", na(i-1).m_data, wa(i-1) xor 1
+                    set na(i-1) = rotate(na(i-1), wa(i-1) xor 1)
+                    set na(i-2).m_child(wa(i-2)) = na(i-1)
+                end if
+                wscript.echo "Case 3 - Rotate", na(i-2).m_data, wa(i-2) xor 1
+                set na(i-2) = rotate(na(i-2), wa(i-2) xor 1) ' case 3 - rotate ll or rr
+                set na(i-3).m_child(wa(i-3)) = na(i-2)
+                i = 1
+            end if
+        loop
+        set m_root = na(0).m_child(1)
+        m_root.m_color = black
+    end sub
+
+    public function rbdeletei(byval data)
+        wscript.echo "Deleting => ", data
+        dim node, q, na(50), wa(50), i ' na - node array, wa - way array, i - stack cnt
+        i = 0
+        set na(i) = rbheadnode ' fake head where right child points to root of tree
+        wa(i) = 1
+        set node = m_root
+        do until node is nothing ' or node.m_data = data
             if node.m_data = data then
                 exit do
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            i = i+1
+            set na(i) = node
+            wa(i) = (node.m_data < data) and 1
+            set node = node.m_child(wa(i))
         loop
         if node is nothing then ' not found
-            set bstdeletei = node
+            set rbdeletei = node
             exit function
         end if
-        if node.m_child(0) is nothing then
+        i = i+1
+        set na(i) = node
+        if node.m_child(0) is nothing then     ' one child or leaf
             set q = node.m_child(1)
-        elseif node.m_child(1) is nothing then
+            wa(i) = 1
+        elseif node.m_child(1) is nothing then ' one child or leaf
             set q = node.m_child(0)
-        else
-            set parent = node
-            way = 1 ' right child
+            wa(i) = 0
+        else                                   ' two children find successor
+            wa(i) = 1
             dim succ : set succ = node.m_child(1)
             do until succ.m_child(0) is nothing
-                set parent = succ
-                way = 0
-                set succ = succ.m_next(0)
+                i = i+1
+                set na(i) = succ
+                wa(i) = 0
+                set succ = succ.m_child(0)
             loop
+            i = i+1
+            set na(i) = succ
+            wa(i) = 1
             node.m_data = succ.m_data
-            set q = succ.m_child(1)
+            set node = succ
+            set q = node.m_child(1)
         end if
-        if parent is nothing then
-            set m_root = q
-        else
-            set parent.m_child(way) = q
+        ' node is to be deleted and q is successor node
+        set na(i-1).m_child(wa(i-1)) = q
+        if not isred(q) then
+            rbdeleteifixup na, wa, i
         end if
-        set bstdeletei = node
+        if not q is nothing then
+            q.m_color = black
+        end if
+        set m_root = na(0).m_child(1)
+        m_cnt = m_cnt-1
+        set rbdeletei = node
     end function
+
+    private sub rbdeleteifixup(byref na(), byref wa(), byval i)
+        do until i < 2 or isred(na(i))
+            dim sib : set sib = na(i-1).m_child(wa(i-1) xor 1)
+            if isred(sib) then                                              ' case 1 - red sibling case reduction
+                wscript.echo "case 1 - red sibling case reduction - rotate", na(i-1).m_data, wa(i-1)
+                set na(i-2).m_child(wa(i-2)) = rotate(na(i-1), wa(i-1))
+                set na(i) = na(i-1)
+                set na(i-1) = sib
+                i = i+1
+                set sib = na(i-1).m_child(wa(i-1) xor 1)
+            end if
+            if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
+                wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", sib.m_data
+                sib.m_color = red
+                i = i-1
+            else
+                if not isred(sib.m_child(wa(i-1) xor 1)) then               ' case 3 - lr/rl sibling red child - rotate
+                    wscript.echo "case 3 - lr/rl sibling red child - rotate", sib.m_data, wa(i-1) xor 1
+                    set na(i-1).m_child(wa(i-1) xor 1) = rotate(sib, wa(i-1) xor 1)
+                    set sib = na(i-1).m_child(wa(i-1) xor 1)
+                end if
+                wscript.echo "case 4 - ll/rr sibling red child - rotate", na(i-1).m_data, wa(i-1)
+                set na(i-2).m_child(wa(i-2)) = rotate(na(i-1), wa(i-1))                      ' case 4 - ll/rr sibling red child - rotate
+                set na(i-1) = sib
+                na(i-1).m_child(0).m_color = black
+                na(i-1).m_child(1).m_color = black
+                i = 1
+            end if
+        loop
+        na(i).m_color = black
+    end sub
 
     public sub preorderr()
         preorderrnode(m_root)
