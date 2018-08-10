@@ -179,24 +179,18 @@ class tbst
         set head.m_child(1) = m_root
 
         ' create the vine to the right
+        n = 0
         set parent = head
         set node = head.m_child(1)
         do until node is nothing
-            if not node.m_child(0) is nothing then
+            if not node.m_child(0) is nothing then  ' left child
                 set node = rotate(node, 1)
                 set parent.m_child(1) = node
-            else
+            else                                    ' right child
+                n = n+1
                 set parent = node
                 set node = node.m_child(1)
             end if
-        loop
-
-        ' count the nodes
-        n = 0
-        set node = head.m_child(1)
-        do until node is nothing
-            n = n+1
-            set node = node.m_child(1)
         loop
 
         ' balance the tree
