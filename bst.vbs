@@ -40,7 +40,8 @@ sub main()
     wscript.echo tree.heighti
     wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
-    tree.bstdsw
+    ' tree.bstdsw
+    tree.bstdswr
     tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
     wscript.echo tree.heightiq
@@ -150,13 +151,6 @@ class tbst
         end if
     end function
 
-    public function rotate(byval node, byval way)
-        dim root : set root = node.m_child(way xor 1)
-        set node.m_child(way xor 1) = root.m_child(way)
-        set root.m_child(way) = node
-        set rotate = root
-    end function
-
     public function bstfindr(data)
         set bstfindr = bstfindnoder(m_root, data)
     end function
@@ -172,9 +166,16 @@ class tbst
         end if
     end function
 
+    public function rotate(byval node, byval way)
+        dim root : set root = node.m_child(way xor 1)
+        set node.m_child(way xor 1) = root.m_child(way)
+        set root.m_child(way) = node
+        set rotate = root
+    end function
+
     public sub bstdsw
         ' Day-Stout-Warren Algorithm
-        dim head, node, parent, n, i, j
+        dim head, node, parent, n, i, m
         set head = (new tbstnode).init(0)
         set head.m_child(1) = m_root
 
@@ -194,21 +195,77 @@ class tbst
         loop
 
         ' balance the tree
-        for i = 1 to int(log(n) / log(2))
+        m = 2 ^ int(log(n+1) / log(2)) - 1
+        wscript.echo "n, m, n-m => ", n, m, n-m
+        set parent = head
+        set node = head.m_child(1)
+        for i = 1 to n-m
+            set node = rotate(node, 0)
+            set parent.m_child(1) = node
+            set parent = node
+            set node = node.m_child(1)
+        next
+        do while m > 1
+            m = m \ 2
             set parent = head
             set node = head.m_child(1)
-            for j = 1 to (n-1) \ 2
+            for i = 1 to m
                 set node = rotate(node, 0)
                 set parent.m_child(1) = node
                 set parent = node
                 set node = node.m_child(1)
             next
-            n = n \ 2
-        next
+        loop
 
         ' update root
         set m_root = head.m_child(1)
     end sub
+
+    public sub bstdswr
+        set m_root = bstdswvine(m_root)
+        set m_root = bstdswtree(m_root)
+    end sub
+
+    public function bstdswtree(byval node)
+        dim n, m, i
+        n = bstdswcount(node)
+        m = 2 ^ int(log(n+1) / log(2)) - 1
+        wscript.echo "n, m, n-m => ", n, m, n-m
+        set node = bstdswcompress(node, n-m)
+        do while m > 1
+            m = m \ 2
+            set node = bstdswcompress(node, m)
+        loop
+        set bstdswtree = node
+    end function
+
+    public function bstdswcompress(byval node, byval n)
+        if n > 0 then
+            set node = rotate(node, 0)
+            set node.m_child(1) = bstdswcompress(node.m_child(1), n-1)
+        end if
+        set bstdswcompress = node
+    end function
+
+    public function bstdswcount(byval node)
+        dim n
+        n = 0
+        do until node is nothing
+            n = n+1
+            set node = node.m_child(1)
+        loop
+        bstdswcount = n
+    end function
+
+    public function bstdswvine(byval node)
+        if not node is nothing then
+            do until node.m_child(0) is nothing
+                set node = rotate(node, 1)
+            loop
+            set node.m_child(1) = bstdswvine(node.m_child(1))
+        end if
+        set bstdswvine = node
+    end function
 
     public function bstfindi(data)
         dim node : set node = m_root
