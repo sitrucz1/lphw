@@ -40,8 +40,8 @@ sub main()
     wscript.echo tree.heighti
     wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
-    ' tree.bstdsw
-    tree.bstdswr
+    tree.bstdsw
+    ' tree.bstdswr
     tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
     wscript.echo tree.heightiq
@@ -175,7 +175,7 @@ class tbst
 
     public sub bstdsw
         ' Day-Stout-Warren Algorithm
-        dim head, node, parent, n, i, m
+        dim head, node, parent, n, m
         set head = (new tbstnode).init(0)
         set head.m_child(1) = m_root
 
@@ -197,28 +197,26 @@ class tbst
         ' balance the tree
         m = 2 ^ int(log(n+1) / log(2)) - 1
         wscript.echo "n, m, n-m => ", n, m, n-m
+        bstdswcompress head, n-m
+        do while m > 1
+            m = m \ 2
+            bstdswcompress head, m
+        loop
+
+        ' update root
+        set m_root = head.m_child(1)
+    end sub
+
+    public sub bstdswcompress(byval head, byval n)
+        dim node, parent, i
         set parent = head
         set node = head.m_child(1)
-        for i = 1 to n-m
+        for i = 1 to n
             set node = rotate(node, 0)
             set parent.m_child(1) = node
             set parent = node
             set node = node.m_child(1)
         next
-        do while m > 1
-            m = m \ 2
-            set parent = head
-            set node = head.m_child(1)
-            for i = 1 to m
-                set node = rotate(node, 0)
-                set parent.m_child(1) = node
-                set parent = node
-                set node = node.m_child(1)
-            next
-        loop
-
-        ' update root
-        set m_root = head.m_child(1)
     end sub
 
     public sub bstdswr
@@ -231,15 +229,15 @@ class tbst
         n = bstdswcount(node)
         m = 2 ^ int(log(n+1) / log(2)) - 1
         wscript.echo "n, m, n-m => ", n, m, n-m
-        set node = bstdswcompress(node, n-m)
+        set node = bstdswcompressr(node, n-m)
         do while m > 1
             m = m \ 2
-            set node = bstdswcompress(node, m)
+            set node = bstdswcompressr(node, m)
         loop
         set bstdswtree = node
     end function
 
-    public function bstdswcompress(byval node, byval n)
+    public function bstdswcompressr(byval node, byval n)
         if n > 0 then
             set node = rotate(node, 0)
             set node.m_child(1) = bstdswcompress(node.m_child(1), n-1)
