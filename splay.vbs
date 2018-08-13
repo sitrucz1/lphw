@@ -143,7 +143,6 @@ sub main()
     tree.levelorderi
     wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
-    wscript.quit
     set tree = nothing
     set tree = new tbst
     tree.bstputr(5)
@@ -161,11 +160,24 @@ sub main()
     set tree = nothing
     set tree = new tbst
     tree.bstputi(5)
+    tree.levelorderi
+    wscript.echo tree.heightiq
+    wscript.echo tree.isbst(tree.m_root)
     tree.bstputi(4)
+    tree.levelorderi
+    wscript.echo tree.heightiq
+    wscript.echo tree.isbst(tree.m_root)
     tree.bstputi(1)
+    tree.levelorderi
+    wscript.echo tree.heightiq
+    wscript.echo tree.isbst(tree.m_root)
     tree.bstputi(2)
+    tree.levelorderi
+    wscript.echo tree.heightiq
+    wscript.echo tree.isbst(tree.m_root)
     tree.bstputi(7)
     tree.levelorderi
+    wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
     tree.bstdeletei(1)
     tree.levelorderi
@@ -318,22 +330,32 @@ class tbst
     end function
 
     public function bstputi(byval data)
-        dim node, parent, way : set node = m_root : set parent = nothing
+        wscript.echo "Inserting => ", data
+        dim node, head, na(100), wa(100), k
+        set head = (new tbstnode).init(0)
+        set head.m_child(1) = m_root
+        k = 0
+        set na(k) = head
+        wa(k) = 1
+        set node = m_root
         do until node is nothing
+            k = k+1
+            set na(k) = node
+            wa(k) = (node.m_data < data) and 1
             if node.m_data = data then
                 set bstputi = node
-                exit function
+                exit do
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            set node = node.m_child(wa(k))
         loop
-        set node = (new tbstnode).init(data)
-        if parent is nothing then
-            set m_root = node
-        else
-            set parent.m_child(way) = node
+        if node is nothing then
+            set node = (new tbstnode).init(data)
+            k = k+1
+            set na(k) = node
+            wa(k) = (node.m_data < data) and 1
+            set na(k-1).m_child(wa(k-1)) = node
         end if
+        splay na, wa, k
         set bstputi = node
     end function
 
