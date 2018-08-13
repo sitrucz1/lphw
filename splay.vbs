@@ -179,8 +179,18 @@ sub main()
     tree.levelorderi
     wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
+    tree.bstdeletei(4)
+    tree.levelorderi
+    wscript.echo tree.isbst(tree.m_root)
+    tree.bstdeletei(7)
+    tree.levelorderi
+    wscript.echo tree.isbst(tree.m_root)
+    tree.bstdeletei(2)
+    tree.levelorderi
+    wscript.echo tree.isbst(tree.m_root)
     tree.bstdeletei(1)
     tree.levelorderi
+    wscript.echo tree.isbst(tree.m_root)
     tree.bstdeletei(5)
     tree.levelorderi
     wscript.echo tree.isbst(tree.m_root)
@@ -389,40 +399,47 @@ class tbst
     end function
 
     public function bstdeletei(byval data)
-        dim node, parent, q, way : set node = m_root : set parent = nothing
+        wscript.echo "Deleting => ", data
+        dim node, q, head, na(100), wa(100), k
+        set head = (new tbstnode).init(0)
+        set head.m_child(1) = m_root
+        k = 0
+        set na(k) = head
+        wa(k) = 1
+        set node = m_root
         do until node is nothing
+            k = k+1
+            set na(k) = node
+            wa(k) = (node.m_data < data) and 1
             if node.m_data = data then
                 exit do
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            set node = node.m_child(wa(k))
         loop
-        if node is nothing then ' not found
-            set bstdeletei = node
-            exit function
+        dim m : m = k ' save current counter for splaying
+        if not node is nothing then ' found it
+            if node.m_child(0) is nothing then
+                set q = node.m_child(1)
+            elseif node.m_child(1) is nothing then
+                set q = node.m_child(0)
+            else
+                wa(k) = 1 ' right child
+                dim succ : set succ = node.m_child(1)
+                do until succ.m_child(0) is nothing
+                    k = k+1
+                    set na(k) = succ
+                    wa(k) = 0
+                    set succ = succ.m_child(0)
+                loop
+                k = k+1
+                set na(k) = succ
+                wa(k) = 1
+                node.m_data = succ.m_data
+                set q = succ.m_child(1)
+            end if
+            set na(k-1).m_child(wa(k-1)) = q
         end if
-        if node.m_child(0) is nothing then
-            set q = node.m_child(1)
-        elseif node.m_child(1) is nothing then
-            set q = node.m_child(0)
-        else
-            set parent = node
-            way = 1 ' right child
-            dim succ : set succ = node.m_child(1)
-            do until succ.m_child(0) is nothing
-                set parent = succ
-                way = 0
-                set succ = succ.m_next(0)
-            loop
-            node.m_data = succ.m_data
-            set q = succ.m_child(1)
-        end if
-        if parent is nothing then
-            set m_root = q
-        else
-            set parent.m_child(way) = q
-        end if
+        splay na, wa, m-1
         set bstdeletei = node
     end function
 
