@@ -26,25 +26,29 @@ sub main()
     '         9  18
     '             \
     '             19
-    tree.preorderr
-    tree.preorderi
-    tree.preorderiw
-    tree.inorderr
-    tree.inorderi
-    tree.inorderiw
-    tree.postorderr
-    tree.postorderi
-    tree.postorderiw
+    ' tree.preorderr
+    ' tree.preorderi
+    ' tree.preorderiw
+    ' tree.inorderr
+    ' tree.inorderi
+    ' tree.inorderiw
+    ' tree.postorderr
+    ' tree.postorderi
+    ' tree.postorderiw
     tree.levelorderi
-    wscript.echo tree.heightr
-    wscript.echo tree.heighti
-    wscript.echo tree.heightiq
+    ' wscript.echo tree.heightr
+    ' wscript.echo tree.heighti
+    ' wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
-    tree.bstdsw
+    dim s1, s2 : set s1 = new tbst : set s2 = new tbst
+    tree.bstsplit tree.m_root, 9, s1.m_root, s2.m_root
+    s1.levelorderi
+    wscript.echo s1.isbst(s1.m_root)
+    ' tree.bstdsw
     ' tree.bstdswr
-    tree.levelorderi
-    wscript.echo tree.isbst(tree.m_root)
-    wscript.echo tree.heightiq
+    ' tree.levelorderi
+    ' wscript.echo tree.isbst(tree.m_root)
+    ' wscript.echo tree.heightiq
     wscript.quit
     if tree.bstfindr(7) is nothing then
         wscript.echo "not found"
@@ -164,6 +168,33 @@ class tbst
             dim way : way = (node.m_data < data) and 1
             set bstfindnoder = bstfindnoder(node.m_child(way), data)
         end if
+    end function
+
+    public sub bstsplit(byval node, byval data, byref s1, byref s2)
+        if node is nothing then
+            set s1 = nothing
+            set s2 = nothing
+        elseif node.m_data = data then
+            wscript.echo "node => ", node.m_data
+            set s2 = node.m_child(1) ' node gets modified so have to assign s2 first
+            set s1 = bstjoin(node.m_child(0), node, s1)
+            wscript.echo s1.m_data
+        else
+            dim way : way = (node.m_data < data) and 1
+            wscript.echo "node, way => ", node.m_data, way
+            bstsplit node.m_child(way), data, s1, s2
+            if way = 1 then
+                set s1 = bstjoin(node.m_child(0), node, s1)
+            else
+                set s2 = bstjoin(s2, node, node.m_child(1))
+            end if
+        end if
+    end sub
+
+    public function bstjoin(byval s1, byval node, byval s2)
+        set node.m_child(0) = s1
+        set node.m_child(1) = s2
+        set bstjoin = node
     end function
 
     public function rotate(byval node, byval way)
