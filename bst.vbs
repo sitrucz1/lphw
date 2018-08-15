@@ -40,10 +40,13 @@ sub main()
     ' wscript.echo tree.heighti
     ' wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
-    dim s1, s2 : set s1 = new tbst : set s2 = new tbst
-    tree.bstsplit tree.m_root, 9, s1.m_root, s2.m_root
-    s1.levelorderi
-    wscript.echo s1.isbst(s1.m_root)
+    dim small, big : set small = new tbst : set big = new tbst
+    tree.bstsplit tree.m_root, 9, small.m_root, big.m_root
+    if small.m_root is nothing then
+        wscript.echo "it is nothing."
+    end if
+    small.levelorderi
+    wscript.echo small.isbst(small.m_root)
     ' tree.bstdsw
     ' tree.bstdswr
     ' tree.levelorderi
@@ -185,8 +188,10 @@ class tbst
             bstsplit node.m_child(way), data, s1, s2
             if way = 1 then
                 set s1 = bstjoin(node.m_child(0), node, s1)
+                wscript.echo s1.m_data
             else
                 set s2 = bstjoin(s2, node, node.m_child(1))
+                wscript.echo s2.m_data
             end if
         end if
     end sub
