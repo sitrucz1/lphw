@@ -41,12 +41,12 @@ sub main()
     ' wscript.echo tree.heightiq
     wscript.echo tree.isbst(tree.m_root)
     dim small, big : set small = new tbst : set big = new tbst
-    tree.bstsplit tree.m_root, 9, small.m_root, big.m_root
-    if small.m_root is nothing then
-        wscript.echo "it is nothing."
-    end if
+    ' tree.bstsplit tree.m_root, 9, small, big
+    tree.bstspliti tree.m_root, 11, small, big
     small.levelorderi
+    big.levelorderi
     wscript.echo small.isbst(small.m_root)
+    wscript.echo big.isbst(big.m_root)
     ' tree.bstdsw
     ' tree.bstdswr
     ' tree.levelorderi
@@ -175,25 +175,51 @@ class tbst
 
     public sub bstsplit(byval node, byval data, byref s1, byref s2)
         if node is nothing then
-            set s1 = nothing
-            set s2 = nothing
+            set s1.m_root = nothing
+            set s2.m_root = nothing
         elseif node.m_data = data then
             wscript.echo "node => ", node.m_data
-            set s2 = node.m_child(1) ' node gets modified so have to assign s2 first
-            set s1 = bstjoin(node.m_child(0), node, s1)
-            wscript.echo s1.m_data
+            set s2.m_root = node.m_child(1) ' node gets modified so have to assign s2 first
+            set s1.m_root = bstjoin(node.m_child(0), node, s1.m_root)
+            wscript.echo s1.m_root.m_data
         else
             dim way : way = (node.m_data < data) and 1
             wscript.echo "node, way => ", node.m_data, way
             bstsplit node.m_child(way), data, s1, s2
             if way = 1 then
-                set s1 = bstjoin(node.m_child(0), node, s1)
-                wscript.echo s1.m_data
+                set s1.m_root = bstjoin(node.m_child(0), node, s1.m_root)
+                wscript.echo s1.m_root.m_data
             else
-                set s2 = bstjoin(s2, node, node.m_child(1))
-                wscript.echo s2.m_data
+                set s2.m_root = bstjoin(s2.m_root, node, node.m_child(1))
+                wscript.echo s2.m_root.m_data
             end if
         end if
+    end sub
+
+    public sub bstspliti(byval node, byval data, byref s1, byref s2)
+        dim k, na(100), wa(100)
+        k = -1
+        do until node is nothing
+            k = k+1
+            set na(k) = node
+            wa(k) = (node.m_data <= data) and 1
+            if node.m_data = data then
+                exit do
+            end if
+            set node = node.m_child(wa(k))
+        loop
+        set s1.m_root = nothing
+        set s2.m_root = nothing
+        if not node is nothing then ' node was found
+            set s2.m_root = node.m_child(1)
+        end if
+        for k = k to 0 step -1
+            if wa(k) = 1 then
+                set s1.m_root = bstjoin(na(k).m_child(0), na(k), s1.m_root)
+            else
+                set s2.m_root = bstjoin(s2.m_root, na(k), na(k).m_child(1))
+            end if
+        next
     end sub
 
     public function bstjoin(byval s1, byval node, byval s2)
