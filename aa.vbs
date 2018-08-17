@@ -2,6 +2,19 @@ option explicit
 
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
+    dim aat : set aat = new taat
+    dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15,17,18,19,20,25)
+    do while i <= ubound(test) and aat.isaat
+        aat.aatputi(int(rnd*100) + 1)
+        ' aat.aatputi(test(i))
+        ' aat.levelorderi
+        i = i+1
+    loop
+    do until aat.isempty or not aat.isaat
+        aat.aatdeletei(aat.m_root.m_data)
+        ' aat.aatdeletei(22)
+        ' aat.levelorderi
+    loop
 end sub
 
 sub includefile(fspec)
@@ -11,14 +24,14 @@ end sub
 class taatnode
 
     public m_data
-    public m_child(1)
     public m_level
+    public m_child(1)
 
-    public function init(byval data)
+    public function init(byval data, byval nilnode)
         m_data = data
-        set m_child(0) = nothing
-        set m_child(1) = nothing
         m_level = 1
+        set m_child(0) = nilnode
+        set m_child(1) = nilnode
         set init = me
     end function
 
@@ -27,15 +40,21 @@ end class
 class taat
 
     public m_root
+    public m_nil
     public m_cnt
 
     private sub class_initialize()
-        set m_root = nothing
+        set m_nil = new taatnode
+        m_nil.m_data = 0
+        m_nil.m_level = 0
+        set m_nil.m_child(0) = m_nil
+        set m_nil.m_child(1) = m_nil
+        set m_root = m_nil
         m_cnt = 0
     end sub
 
     private function isless(a, b)
-        if a is nothing or b is nothing then
+        if a is m_nil or b is m_nil then
             isless = false
         else
             isless = (a.m_data < b.m_data)
@@ -51,11 +70,11 @@ class taat
     end function
 
     public function getlevel(byval node)
-        if node is nothing then
-            getlevel = 0
-        else
-            getlevel = node.m_level
-        end if
+        getlevel = node.m_level
+    end function
+
+    public function isempty
+        isempty = m_root is m_nil
     end function
 
     public function isaat
@@ -63,8 +82,14 @@ class taat
     end function
 
     public function isaatnode(byval node, byval plevel)
-        if node is nothing then
+        if node is m_nil then
             isaatnode = 0
+        elseif m_nil.m_level <> 0 then
+            wscript.echo "ERROR: sentinel level is not 0."
+            isaatnode = -1
+        elseif not m_nil.m_child(0) is m_nil or not m_nil.m_child(1) is m_nil then
+            wscript.echo "ERROR: sentinel children don't point to itself."
+            isaatnode = -1
         elseif isless(node, node.m_child(0)) or isless(node.m_child(1), node) then
             wscript.echo "ERROR: not a bst"
             isaatnode = -1
@@ -75,11 +100,7 @@ class taat
             dim lc, rc, grc
             lc = getlevel(node.m_child(0))
             rc = getlevel(node.m_child(1))
-            if rc > 0 then
-                grc = getlevel(node.m_child(1).m_child(1))
-            else
-                grc = 0
-            end if
+            grc = getlevel(node.m_child(1).m_child(1))
             if node.m_level <> lc+1 then
                 wscript.echo "ERROR: left child level is not one less than parent.", node.m_data
                 isaatnode = -1
@@ -95,6 +116,9 @@ class taat
                 rh = isaatnode(node.m_child(1), node.m_level)
                 if lh = -1 or rh = -1 then
                    isaatnode = -1
+                elseif lh <> rh then
+                    wscript.echo "ERROR: heights don't match.", node.m_data, lh, rh
+                    isaatnode = -1
                 elseif node.m_level <> plevel then
                     isaatnode = lh+1
                 else
@@ -104,16 +128,50 @@ class taat
         end if
     end function
 
+    public function makefakehead
+        dim node
+        set node = (new taatnode).init(0, m_nil)
+        node.m_level = 0
+        set node.m_child(1) = m_root
+        set makefakehead = node
+    end function
+
     public function rotate(byval node, byval way)
-        dim root : set root = node.m_child(way xor 1)
-        set node.m_child(way xor 1) = root.m_child(way)
-        set root.m_child(way) = node
-        set rotate = root
+        dim temp
+        set temp = node.m_child(way xor 1)
+        set node.m_child(way xor 1) = temp.m_child(way)
+        set temp.m_child(way) = node
+        set rotate = temp
+    end function
+
+    public function aatskew(byval node)
+        if getlevel(node) = getlevel(node.m_child(0)) then
+            wscript.echo "Case 1 - Skew node.", node.m_data
+            dim temp
+            set temp = node
+            set node = temp.m_child(0)
+            set temp.m_child(0) = node.m_child(1)
+            set node.m_child(1) = temp
+        end if
+        set aatskew = node
+    end function
+
+    public function aatsplit(byval node)
+        if getlevel(node) = getlevel(node.m_child(1).m_child(1)) then
+            wscript.echo "Case 2 - Split node.", node.m_data
+            dim temp
+            set temp = node
+            set node = temp.m_child(1)
+            set temp.m_child(1) = node.m_child(0)
+            set node.m_child(0) = temp
+            node.m_level = node.m_level+1
+        end if
+        set aatsplit = node
     end function
 
     public function aatfindi(data)
         dim node : set node = m_root
-        do until node is nothing
+        do until node is m_nil
             if node.m_data = data then
                 exit do
             end if
@@ -124,68 +182,93 @@ class taat
     end function
 
     public function aatputi(byval data)
-        dim node, parent, way : set node = m_root : set parent = nothing
-        do until node is nothing
+        wscript.echo "** Inserting => ", data
+        dim node, na(50), wa(50), k
+        k = 0
+        set na(k) = makefakehead
+        wa(k) = 1
+        set node = m_root
+        do until node is m_nil
+            k = k+1
+            set na(k) = node
+            wa(k) = (node.m_data < data) and 1
             if node.m_data = data then
                 set aatputi = node
                 exit function
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            set node = node.m_child(wa(k))
         loop
-        set node = (new taatnode).init(data)
-        if parent is nothing then
-            set m_root = node
-        else
-            set parent.m_child(way) = node
-        end if
+        ' create the new node
+        set node = (new taatnode).init(data, m_nil)
+        ' update parent link
+        set na(k).m_child(wa(k)) = node
+        ' fixup
+        for k = k to 1 step -1
+            set na(k) = aatskew(na(k))
+            set na(k) = aatsplit(na(k))
+            set na(k-1).m_child(wa(k-1)) = na(k)
+        next
+        ' update root
+        set m_root = na(0).m_child(1)
+        m_cnt = m_cnt+1
         set aatputi = node
     end function
 
     public function aatdeletei(byval data)
-        dim node, parent, q, way : set node = m_root : set parent = nothing
-        do until node is nothing
-            if node.m_data = data then
-                exit do
+        wscript.echo "** Deleting => ", data
+        dim node, na(50), wa(50), k, x
+        x = 0
+        k = 0
+        set na(k) = makefakehead
+        wa(k) = 1 ' fake root right child is real root
+        set node = m_root
+        do until node is m_nil
+            k = k+1
+            set na(k) = node
+            wa(k) = (node.m_data <= data) and 1
+            if wa(k) = 1 then
+                x = k
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            set node = node.m_child(wa(k))
         loop
-        if node is nothing then ' not found
-            set aatdeletei = node
+        ' x is the found node. k is the leaf with 0 or 1 children
+        wscript.echo "x, k, xdata, kdata => ", x, k, na(x).m_data, na(k).m_data
+        if x = 0 or na(x).m_data <> data then
+            set aatdeletei = node   ' not found
             exit function
         end if
-        if node.m_child(0) is nothing then
-            set q = node.m_child(1)
-        elseif node.m_child(1) is nothing then
-            set q = node.m_child(0)
-        else
-            set parent = node
-            way = 1 ' right child
-            dim succ : set succ = node.m_child(1)
-            do until succ.m_child(0) is nothing
-                set parent = succ
-                way = 0
-                set succ = succ.m_next(0)
-            loop
-            node.m_data = succ.m_data
-            set q = succ.m_child(1)
-        end if
-        if parent is nothing then
-            set m_root = q
-        else
-            set parent.m_child(way) = q
-        end if
+        ' splice out the node
+        set node = na(k)
+        na(x).m_data = na(k).m_data
+        set na(k-1).m_child(wa(k-1)) = na(k).m_child(wa(k) xor 1)
+        ' fixup
+        for k = k-1 to 1 step -1
+            wscript.echo "Checking k, kdata => ", k, na(k).m_data
+            if na(k).m_child(0).m_level < na(k).m_level-1 or na(k).m_child(1).m_level < na(k).m_level-1 then
+                wscript.echo "Fixup k, kdata => ", k, na(k).m_data
+                na(k).m_level = na(k).m_level-1
+                if na(k).m_child(1).m_level > na(k).m_level then
+                    na(k).m_child(1).m_level = na(k).m_level
+                end if
+                set na(k) = aatskew(na(k))
+                set na(k).m_child(1) = aatskew(na(k).m_child(1))
+                set na(k).m_child(1).m_child(1) = aatskew(na(k).m_child(1).m_child(1))
+                set na(k) = aatsplit(na(k))
+                set na(k).m_child(1) = aatsplit(na(k).m_child(1))
+                set na(k-1).m_child(wa(k-1)) = na(k)
+            end if
+        next
+        ' update the root and counts
+        set m_root = na(0).m_child(1)
+        m_cnt = m_cnt-1
         set aatdeletei = node
     end function
 
     public sub preorderi()
         dim stack : set stack = new tstack
         dim node : set node = m_root
-        do until node is nothing and stack.isempty
-            if not node is nothing then
+        do until node is m_nil and stack.isempty
+            if not node is m_nil then
                 wscript.stdout.write node.m_data & " "
                 stack.push node
                 set node = node.m_child(0)  ' left child
@@ -200,8 +283,8 @@ class taat
     public sub inorderi()
         dim stack : set stack = new tstack
         dim node : set node = m_root
-        do until node is nothing and stack.isempty
-            if not node is nothing then
+        do until node is m_nil and stack.isempty
+            if not node is m_nil then
                 stack.push node
                 set node = node.m_child(0)  ' left child
             else
@@ -215,17 +298,17 @@ class taat
 
     public sub postorderi()
         dim stack : set stack = new tstack
-        dim node, prev : set node = m_root : set prev = nothing
-        do until node is nothing and stack.isempty
-            if not node is nothing then
+        dim node, prev : set node = m_root : set prev = m_nil
+        do until node is m_nil and stack.isempty
+            if not node is m_nil then
                 stack.push node
                 set node = node.m_child(0)  ' left child
             else
                 set node = stack.pop
-                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                if node.m_child(1) is m_nil or node.m_child(1) is prev then
                     wscript.stdout.write node.m_data & " "
                     set prev = node
-                    set node = nothing
+                    set node = m_nil
                 else
                     stack.push node
                     set node = node.m_child(1)  ' right child
@@ -237,17 +320,17 @@ class taat
 
     public sub levelorderi()
         dim queue : set queue = new tqueue
-        if m_root is nothing then
+        if m_root is m_nil then
             exit sub
         end if
         queue.enqueue m_root
         do until queue.isempty
             dim node : set node = queue.dequeue
-            wscript.stdout.write node.m_data & " "
-            if not node.m_child(0) is nothing then
+            wscript.stdout.write node.m_data & "," & node.m_level & " "
+            if not node.m_child(0) is m_nil then
                 queue.enqueue node.m_child(0)
             end if
-            if not node.m_child(1) is nothing then
+            if not node.m_child(1) is m_nil then
                 queue.enqueue node.m_child(1)
             end if
         loop
@@ -256,22 +339,22 @@ class taat
 
     public function heighti()
         dim stack : set stack = new tstack
-        dim node, prev : set node = m_root : set prev = nothing
+        dim node, prev : set node = m_root : set prev = m_nil
         dim hcnt, hmax : hcnt = 0 : hmax = 0
-        do until node is nothing and stack.isempty
-            if not node is nothing then
+        do until node is m_nil and stack.isempty
+            if not node is m_nil then
                 stack.push node
                 hcnt = hcnt+1
                 set node = node.m_child(0)  ' left child
             else
                 set node = stack.pop
-                if node.m_child(1) is nothing or node.m_child(1) is prev then
+                if node.m_child(1) is m_nil or node.m_child(1) is prev then
                     if hcnt > hmax then
                         hmax = hcnt
                     end if
                     hcnt = hcnt-1
                     set prev = node
-                    set node = nothing
+                    set node = m_nil
                 else
                     stack.push node
                     set node = node.m_child(1)  ' right child
@@ -283,7 +366,7 @@ class taat
 
     public function heightiq()
         dim queue : set queue = new tqueue
-        if m_root is nothing then
+        if m_root is m_nil then
             heightiq = 0
             exit function
         end if
@@ -291,10 +374,10 @@ class taat
         dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
         do until queue.isempty
             dim node : set node = queue.dequeue
-            if not node.m_child(0) is nothing then
+            if not node.m_child(0) is m_nil then
                 queue.enqueue node.m_child(0)   ' left child
             end if
-            if not node.m_child(1) is nothing then
+            if not node.m_child(1) is m_nil then
                 queue.enqueue node.m_child(1)   ' right child
             end if
             lcnt = lcnt-1
