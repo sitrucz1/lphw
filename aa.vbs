@@ -3,13 +3,15 @@ option explicit
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
     dim aat : set aat = new taat
-    dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15,17,18,19,20,25)
+    dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15)
     do while i <= ubound(test) and aat.isaat
         aat.aatputi(int(rnd*100) + 1)
         ' aat.aatputi(test(i))
         ' aat.levelorderi
         i = i+1
     loop
+    wscript.echo aat.aatfindi(aat.m_root.m_data)
+    wscript.echo aat.aatfindi(500)
     do until aat.isempty or not aat.isaat
         aat.aatdeletei(aat.m_root.m_data)
         ' aat.aatdeletei(22)
@@ -136,14 +138,6 @@ class taat
         set makefakehead = node
     end function
 
-    public function rotate(byval node, byval way)
-        dim temp
-        set temp = node.m_child(way xor 1)
-        set node.m_child(way xor 1) = temp.m_child(way)
-        set temp.m_child(way) = node
-        set rotate = temp
-    end function
-
     public function aatskew(byval node)
         if getlevel(node) = getlevel(node.m_child(0)) then
             wscript.echo "Case 1 - Skew node.", node.m_data
@@ -170,15 +164,15 @@ class taat
     end function
 
     public function aatfindi(data)
-        dim node : set node = m_root
-        do until node is m_nil
-            if node.m_data = data then
-                exit do
-            end if
-            dim way : way = (node.m_data < data) and 1
+        dim node
+        m_nil.m_data = data
+        set node = m_root
+        do until node.m_data = data
+            dim way : way = (node.m_data <= data) and 1
             set node = node.m_child(way)
         loop
-        set aatfindi = node
+        m_nil.m_data = 0
+        aatfindi = not node is m_nil
     end function
 
     public function aatputi(byval data)
