@@ -10,12 +10,13 @@ sub main()
         ' aat.levelorderi
         i = i+1
     loop
-    wscript.echo aat.aatfindi(aat.m_root.m_data)
-    wscript.echo aat.aatfindi(500)
+    aat.levelorderi
+    wscript.echo aat.aatfindi(aat.m_root.m_data).m_data
+    wscript.echo aat.aatfindi(500).m_data
     do until aat.isempty or not aat.isaat
         aat.aatdeletei(aat.m_root.m_data)
         ' aat.aatdeletei(22)
-        ' aat.levelorderi
+        aat.levelorderi
     loop
 end sub
 
@@ -164,20 +165,28 @@ class taat
     end function
 
     public function aatfindi(data)
-        dim node
-        m_nil.m_data = data
+        dim node, x, way
+        set x = m_nil
         set node = m_root
-        do until node.m_data = data
-            dim way : way = (node.m_data <= data) and 1
+        do until node is m_nil
+            if node.m_data <= data then
+                way = 1
+                set x = node
+            else
+                way = 0
+            end if
             set node = node.m_child(way)
         loop
-        m_nil.m_data = 0
-        aatfindi = not node is m_nil
+        if not x is m_nil and x.m_data = data then
+            set node = x
+        end if
+        set aatfindi = node
     end function
 
     public function aatputi(byval data)
         wscript.echo "** Inserting => ", data
-        dim node, na(50), wa(50), k
+        dim node, na(50), wa(50), k, x
+        x = 0
         k = 0
         set na(k) = makefakehead
         wa(k) = 1
@@ -185,26 +194,31 @@ class taat
         do until node is m_nil
             k = k+1
             set na(k) = node
-            wa(k) = (node.m_data < data) and 1
-            if node.m_data = data then
-                set aatputi = node
-                exit function
+            if node.m_data <= data then
+                wa(k) = 1
+                x = k
+            else
+                wa(k) = 0
             end if
             set node = node.m_child(wa(k))
         loop
-        ' create the new node
-        set node = (new taatnode).init(data, m_nil)
-        ' update parent link
-        set na(k).m_child(wa(k)) = node
-        ' fixup
-        for k = k to 1 step -1
-            set na(k) = aatskew(na(k))
-            set na(k) = aatsplit(na(k))
-            set na(k-1).m_child(wa(k-1)) = na(k)
-        next
-        ' update root
-        set m_root = na(0).m_child(1)
-        m_cnt = m_cnt+1
+        if x > 0 and na(x).m_data = data then ' found node
+            set node = na(x)
+        else
+            ' create the new node
+            set node = (new taatnode).init(data, m_nil)
+            ' update parent link
+            set na(k).m_child(wa(k)) = node
+            ' fixup
+            for k = k to 1 step -1
+                set na(k) = aatskew(na(k))
+                set na(k) = aatsplit(na(k))
+                set na(k-1).m_child(wa(k-1)) = na(k)
+            next
+            ' update root
+            set m_root = na(0).m_child(1)
+            m_cnt = m_cnt+1
+        end if
         set aatputi = node
     end function
 
@@ -219,9 +233,11 @@ class taat
         do until node is m_nil
             k = k+1
             set na(k) = node
-            wa(k) = (node.m_data <= data) and 1
-            if wa(k) = 1 then
+            if node.m_data <= data then
+                wa(k) = 1
                 x = k
+            else
+                wa(k) = 0
             end if
             set node = node.m_child(wa(k))
         loop
