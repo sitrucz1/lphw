@@ -3,7 +3,7 @@ option explicit
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
     dim aat : set aat = new taat
-    dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15)
+    dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15,57,75,22,35,19,11)
     do while i <= ubound(test) and aat.isaat
         aat.aatputi(int(rnd*100) + 1)
         ' aat.aatputi(test(i))
@@ -11,8 +11,9 @@ sub main()
         i = i+1
     loop
     aat.levelorderi
-    wscript.echo aat.aatfindi(aat.m_root.m_data).m_data
-    wscript.echo aat.aatfindi(500).m_data
+    wscript.echo aat.isaat
+    ' wscript.echo aat.aatfindi(aat.m_root.m_data).m_data
+    ' wscript.echo aat.aatfindi(500).m_data
     do until aat.isempty or not aat.isaat
         aat.aatdeletei(aat.m_root.m_data)
         ' aat.aatdeletei(22)
@@ -210,11 +211,12 @@ class taat
             ' update parent link
             set na(k).m_child(wa(k)) = node
             ' fixup
-            for k = k to 1 step -1
+            do until k < 1 or (na(k).m_level > na(k).m_child(0).m_level and na(k).m_level > na(k).m_child(1).m_level)
                 set na(k) = aatskew(na(k))
                 set na(k) = aatsplit(na(k))
                 set na(k-1).m_child(wa(k-1)) = na(k)
-            next
+                k = k-1
+            loop
             ' update root
             set m_root = na(0).m_child(1)
             m_cnt = m_cnt+1
