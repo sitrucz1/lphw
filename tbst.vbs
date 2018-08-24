@@ -30,14 +30,26 @@ sub main()
     '         9  18
     '             \
     '             19
+    tree.makethreaded
     tree.preorderi
     tree.inorderi
     tree.postorderi
     tree.levelorderi
     wscript.echo tree.heighti
-    wscript.echo tree.istbst(tree.m_root)
-    tree.makethreaded
-    tree.inorderit
+    wscript.echo tree.istbst
+    wscript.echo tree.tbstfindi(8).m_data
+    wscript.echo tree.tbstfindi(4).m_data
+    wscript.echo tree.tbstfindi(11).m_data
+    set tree = nothing
+    set tree = (new ttbst).init(nil)
+    tree.tbstputi(11)
+    tree.tbstputi(6)
+    tree.tbstputi(21)
+    tree.tbstputi(10)
+    tree.inorderi
+    tree.levelorderi
+    wscript.echo tree.heighti
+    wscript.echo tree.istbst
 end sub
 
 sub includefile(fspec)
@@ -98,14 +110,24 @@ class ttbst
         end if
     end function
 
-    public function istbst(node)
+    public function istbst
+        istbst = istbstn(m_root)
+    end function
+
+    public function istbstn(node)
         if node is m_nil then
-            istbst = true
+            istbstn = true
         elseif isless(node, node.m_child(0)) or isless(node.m_child(1), node) then
             wscript.echo "ERROR: not a BST"
-            istbst = false
+            istbstn = false
         else
-            istbst = istbst(node.m_child(0)) and istbst(node.m_child(1))
+            dim lh, rh
+            lh = istbstn(node.m_child(0))
+            rh = node.m_threaded
+            if not node.m_threaded then
+                rh = istbstn(node.m_child(1))
+            end if
+            istbstn = lh and rh
         end if
     end function
 
@@ -171,6 +193,9 @@ class ttbst
             if node.m_data <= data then
                 way = 1
                 set x = node
+                if node.m_threaded then
+                    set node = m_nil
+                end if
             else
                 way = 0
             end if
@@ -184,26 +209,39 @@ class ttbst
 
     public function tbstputi(byval data)
         dim node, head, parent, x, way
-        set head = (new tbstnode).init(0, m_nil)
+        set head = (new ttbstnode).init(0, m_nil)
         set head.m_child(1) = m_root
         way = 1
         set x = m_nil
         set parent = head
         set node = m_root
         do until node is m_nil
+            set parent = node
             if node.m_data <= data then
                 way = 1
                 set x = node
+                if node.m_threaded then
+                    set node = m_nil
+                end if
             else
                 way = 0
             end if
-            set parent = node
             set node = node.m_child(way)
         loop
         if not x is m_nil and x.m_data = data then
             set node = x ' already in tree
         else
             set node = (new ttbstnode).init(data, m_nil)
+            if way = 0 then
+                set node.m_child(1) = parent
+                node.m_threaded = true
+            else ' way = 1
+                if parent.m_threaded then
+                    set node.m_child(1) = parent.m_child(1)
+                end if
+                node.m_threaded = parent.m_threaded
+                parent.m_threaded = false
+            end if
             set parent.m_child(way) = node
             set m_root = head.m_child(1)
         end if
@@ -225,6 +263,9 @@ class ttbst
             if node.m_data <= data then
                 way = 1
                 set x = node
+                if node.m_threaded then
+                    set node = m_nil
+                end if
             else
                 way = 0
             end if
@@ -242,60 +283,44 @@ class ttbst
     end function
 
     public sub makethreaded()
-        dim node, visited : set node = m_root : visited = false
-        dim ss(), st : redim ss(SSIZE-1) : st = 0   ' stack variables
-        ' set ss(st) = m_nil : st = st+1              ' push nil sentinel node
+        ' Morris traversal.
+        dim node, pred : set node = m_root : set pred = m_nil
         do until node is m_nil
-            do until node.m_child(0) is m_nil or visited
-                ' wscript.echo node.m_data
-                set ss(st) = node : st = st+1       ' push node
-                set node = node.m_child(0)          ' left child
-            loop
-            ' wscript.echo node.m_data
-            if node.m_child(1) is m_nil and st > 0 then
-                node.m_threaded = true
-                st = st-1 : set node.m_child(1) = ss(st) ' pop node
-                set node = node.m_child(1)          ' right threaded child
-                visited = true
-            else
-                set node = node.m_child(1)          ' right child
-                visited = false
+            if not node.m_child(0) is m_nil then
+                set pred = node.m_child(0)                  ' get predecessor node
+                do until pred.m_child(1) is m_nil or pred.m_child(1) is node
+                    set pred = pred.m_child(1)
+                loop
+                if pred.m_child(1) is m_nil then            ' node not visited
+                    set pred.m_child(1) = node              ' thread it
+                    pred.m_threaded = true
+                    set node = node.m_child(0)              ' left child
+                else                                        ' node visited
+                    set node = node.m_child(1)              ' right child
+                end if
+            else                                            ' no more left nodes
+                set node = node.m_child(1)                  ' right child
             end if
         loop
     end sub
 
     public sub preorderi()
-        dim node, ss(), st : redim ss(SSIZE-1) : st = 0 ' stack variables
-        set ss(st) = m_root : st = st+1                 ' push root
-        do until st = 0 ' stack is empty
-            st = st-1 : set node = ss(st)               ' pop node
-            do until node is m_nil
+        dim node, visited : set node = m_root : visited = false
+        do until node is m_nil
+            if not visited then
+                do until node.m_child(0) is m_nil
+                    wscript.stdout.write node.m_data & " "
+                    set node = node.m_child(0)          ' left child
+                loop
                 wscript.stdout.write node.m_data & " "
-                if not node.m_child(1) is m_nil then
-                    set ss(st) = node.m_child(1) : st = st+1 ' push right node
-                end if
-                set node = node.m_child(0)              ' left child
-            loop
-        loop
-        wscript.stdout.writeline
-    end sub
-
-    public sub inorderi()
-        dim ss(), st : redim ss(SSIZE-1) : st = 0   ' stack variables
-        dim node : set node = m_root
-        do until node is m_nil and st = 0           ' stack empty
-            do until node is m_nil
-                set ss(st) = node : st = st+1
-                set node = node.m_child(0)          ' left child
-            loop
-            st = st-1 : set node = ss(st)           ' pop node
-            wscript.stdout.write node.m_data & "," & node.m_threaded & " "
+            end if
+            visited = node.m_threaded
             set node = node.m_child(1)              ' right child
         loop
         wscript.stdout.writeline
     end sub
 
-    public sub inorderit()
+    public sub inorderi()
         dim node, visited : set node = m_root : visited = false
         do until node is m_nil
             do until node.m_child(0) is m_nil or visited
@@ -317,7 +342,7 @@ class ttbst
                 set node = node.m_child(0)      ' left child
             loop
             st = st-1 : set node = ss(st)       ' stack pop
-            if node.m_child(1) is m_nil or node.m_child(1) is prev then
+            if node.m_child(1) is m_nil or node.m_threaded or node.m_child(1) is prev then
                 wscript.stdout.write node.m_data & " "
                 set prev = node
                 set node = m_nil
@@ -341,7 +366,7 @@ class ttbst
             if not node.m_child(0) is m_nil then
                 set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
             end if
-            if not node.m_child(1) is m_nil then
+            if not node.m_child(1) is m_nil and not node.m_threaded then
                 set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
             end if
         loop
@@ -362,7 +387,7 @@ class ttbst
                 if not node.m_child(0) is m_nil then
                     set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
                 end if
-                if not node.m_child(1) is m_nil then
+                if not node.m_child(1) is m_nil and not node.m_threaded then
                     set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
                 end if
                 lcnt = lcnt-1
