@@ -34,6 +34,7 @@ sub main()
     tree.preorderi
     ' tree.inorderr
     tree.inorderi
+    tree.inorderim
     ' tree.postorderr
     tree.postorderi
     tree.levelorderi
@@ -484,6 +485,31 @@ class tbst
             st = st-1 : set node = ss(st)           ' pop node
             wscript.stdout.write node.m_data & " "
             set node = node.m_child(1)              ' right child
+        loop
+        wscript.stdout.writeline
+    end sub
+
+    public sub inorderim()
+        ' Morris Inorder Traversal
+        dim node, pred : set node = m_root : set pred = m_nil
+        do until node is m_nil
+            if not node.m_child(0) is m_nil then
+                set pred = node.m_child(0)                  ' get predecessor node
+                do until pred.m_child(1) is m_nil or pred.m_child(1) is node
+                    set pred = pred.m_child(1)
+                loop
+                if pred.m_child(1) is m_nil then            ' node not visited
+                    set pred.m_child(1) = node              ' thread it
+                    set node = node.m_child(0)              ' left child
+                else                                        ' node visited
+                    wscript.stdout.write node.m_data & " "
+                    set pred.m_child(1) = m_nil             ' unthread it
+                    set node = node.m_child(1)              ' right child
+                end if
+            else                                            ' no more left nodes
+                wscript.stdout.write node.m_data & " "
+                set node = node.m_child(1)                  ' right child
+            end if
         loop
         wscript.stdout.writeline
     end sub
