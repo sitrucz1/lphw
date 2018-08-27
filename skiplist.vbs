@@ -1,31 +1,25 @@
 option explicit
 
 const MAXLEVEL = 16
-const ITER = 10
+const ITER = 64
+const E = 2.71828
 
 sub main()
-    dim sl : set sl = (new tskiplist).init(0.5)
-    dim node : set node = (new tnode).init(2, 5, sl.m_nil)
-    dim i, j, a() : redim a(MAXLEVEL-1)
-    for i = 0 to MAXLEVEL - 1
-        a(i) = 0
-    next
-    for i = 0 to ITER-1
-        j = sl.randlevel
-        a(j-1) = a(j-1) + 1
-    next
-    for i = 0 to MAXLEVEL - 1
-        wscript.echo i+1, a(i), a(i) / ITER
-    next
+    dim sl : set sl = (new tskiplist).init(-1, 1/E)
+    dim i
     ' insert
     for i = 0 to ITER-1
         sl.slput(int(rnd()*100) + 1)
     next
     sl.slprint
+    wscript.stdout.write "Press enter to continue..."
+    wscript.stdin.readline
     ' find
     for i = 1 to 5
         wscript.echo sl.slfind(int(rnd()*100) + 1)
     next
+    wscript.stdout.write "Press enter to continue..."
+    wscript.stdin.readline
     ' delete
     do until sl.isempty
         sl.sldelete(sl.m_head.m_next(sl.m_level-1).m_data)
@@ -55,13 +49,19 @@ class tskiplist
     public m_head
     public m_nil
     public m_level
+    public m_maxlevel
     public m_prob
     public m_cnt
 
-    public function init(byval prob)
+    public function init(byval nodes, byval prob)
         set m_nil = (new tnode).init(65535, MAXLEVEL, nothing)
         set m_head = (new tnode).init(-1, MAXLEVEL, m_nil)
         m_level = 1
+        if nodes = -1 then
+            m_maxlevel = MAXLEVEL
+        else
+            m_maxlevel = int(log(nodes) / log(2)) + 1
+        end if
         m_prob = prob
         m_cnt = 0
         randomize timer
@@ -75,7 +75,7 @@ class tskiplist
     function randlevel
         dim level
         level = 1
-        do until rnd() > m_prob or level > MAXLEVEL
+        do while rnd() < m_prob and level < m_maxlevel
             level = level+1
         loop
         randlevel = level
