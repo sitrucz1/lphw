@@ -33,23 +33,18 @@ end sub
 
 function bsearch(byref arr(), byval v)
     dim k, l, r : l = lbound(arr) : r = ubound(arr)
-    do while l < r
+    do while l <= r
         k = l + (r-l) \ 2
-        if v = arr(k) then
+        if v < arr(k) then
+            r = k-1
+        elseif v > arr(k) then
+            l = k+1
+        else
             bsearch = k
             exit function
         end if
-        if v < arr(k) then
-            r = k-1
-        else
-            l = k+1
-        end if
     loop
-    if v > arr(l) then
-        bsearch = l+1
-    else
-        bsearch = l
-    end if
+    bsearch = l
 end function
 
 function bsearch2(byref arr(), byval v)
