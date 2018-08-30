@@ -5,9 +5,10 @@ const QSIZE = 50
 sub main()
     includefile "queue.vbs"     ' tqueue and tstack
     dim aat : set aat = new taat
-    dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15,57,75,22,35,19,11)
+    dim i, test : i = 0 : randomize timer : test = array(60,22,37,46,85,23,15,57,75,22,35,19,11)
     ' inserting data
-    do while i <= ubound(test) and aat.isaat
+    ' do while i <= ubound(test) and aat.isaat
+    do while i <= 16 and aat.isaat
         aat.aatput(int(rnd*100) + 1)
         ' aat.aatput(test(i))
         aat.levelorder
@@ -15,10 +16,13 @@ sub main()
     loop
     aat.levelorder
     wscript.echo aat.isaat
-    wscript.echo "** Height, level, count, log2n, 2log2n => ", aat.height, aat.m_root.m_level, aat.m_cnt, int(log(aat.m_cnt) / log(2))+1, 2*int(log(aat.m_cnt) / log(2))+1
+    wscript.echo "** Height, level, count, log2n, 2log2n => ", aat.height, aat.m_root.m_level, aat.m_cnt, int(log(aat.m_cnt) / log(2)), 2*int(log(aat.m_cnt) / log(2))
+    aat.printtree
+    wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
     ' finding data
     wscript.echo aat.aatfind(aat.m_root.m_data).m_data
     wscript.echo aat.aatfind(500).m_data
+    wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
     ' deleting data
     do until aat.isempty or not aat.isaat
         aat.aatdelete(aat.m_root.m_data)
@@ -300,6 +304,45 @@ class taat
             end if
             if not node.m_child(1) is m_nil then
                 set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
+            end if
+        loop
+        wscript.stdout.writeline
+    end sub
+
+    public sub printtree()
+        dim qq(), qh, qt, qc : redim qq(QSIZE-1) : qh = 0 : qt = 0 : qc = 0 ' queue variables
+        if m_root is m_nil then
+            exit sub
+        end if
+        dim prev : prev = m_root.m_level
+        set qq(qh) = m_root : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue root
+        do until qc = 0 ' queue empty
+            dim node : set node = qq(qt) : qt = (qt+1) mod QSIZE : qc = qc-1 ' dequeue
+            if node.m_level <> prev then ' new level print a new line
+                wscript.stdout.writeline
+                prev = node.m_level
+            end if
+            ' print the node and it's pseudo node if at the same level
+            dim rc : set rc = node.m_child(1)
+            wscript.stdout.write node.m_data
+            if node.m_level = rc.m_level then
+                wscript.stdout.write "," & rc.m_data
+            end if
+            wscript.stdout.write "  "
+            if not node.m_child(0) is m_nil then
+                set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
+            end if
+            if node.m_level = rc.m_level then ' process the pseudo node as well
+                if not rc.m_child(0) is m_nil then
+                    set qq(qh) = rc.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue pseudo left
+                end if
+                if not rc.m_child(1) is m_nil and rc.m_level <> rc.m_child(1).m_level then
+                    set qq(qh) = rc.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue pseudo right
+                end if
+            else ' not a pseudo node
+                if not node.m_child(1) is m_nil then
+                    set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
+                end if
             end if
         loop
         wscript.stdout.writeline
