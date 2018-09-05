@@ -314,36 +314,37 @@ class taat
         if m_root is m_nil then
             exit sub
         end if
-        dim prev : prev = m_root.m_level
         set qq(qh) = m_root : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue root
+        dim lcnt : lcnt = qc
         do until qc = 0 ' queue empty
-            dim node : set node = qq(qt) : qt = (qt+1) mod QSIZE : qc = qc-1 ' dequeue
-            if node.m_level <> prev then ' new level print a new line
-                wscript.stdout.writeline
-                prev = node.m_level
-            end if
-            ' print the node and it's pseudo node if at the same level
-            dim rc : set rc = node.m_child(1)
-            wscript.stdout.write node.m_data
-            if node.m_level = rc.m_level then
-                wscript.stdout.write "," & rc.m_data
-            end if
-            wscript.stdout.write "  "
-            if not node.m_child(0) is m_nil then
-                set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
-            end if
-            if node.m_level = rc.m_level then ' process the pseudo node as well
-                if not rc.m_child(0) is m_nil then
-                    set qq(qh) = rc.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue pseudo left
+            do until lcnt = 0
+                dim node : set node = qq(qt) : qt = (qt+1) mod QSIZE : qc = qc-1 ' dequeue
+                ' print the node and it's pseudo node if at the same level
+                dim rc : set rc = node.m_child(1)
+                wscript.stdout.write node.m_data
+                if node.m_level = rc.m_level then
+                    wscript.stdout.write "," & rc.m_data
                 end if
-                if not rc.m_child(1) is m_nil and rc.m_level <> rc.m_child(1).m_level then
-                    set qq(qh) = rc.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue pseudo right
+                wscript.stdout.write "  "
+                if not node.m_child(0) is m_nil then
+                    set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
                 end if
-            else ' not a pseudo node
-                if not node.m_child(1) is m_nil then
-                    set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
+                if node.m_level = rc.m_level then ' process the pseudo node as well
+                    if not rc.m_child(0) is m_nil then
+                        set qq(qh) = rc.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue pseudo left
+                    end if
+                    if not rc.m_child(1) is m_nil and rc.m_level <> rc.m_child(1).m_level then
+                        set qq(qh) = rc.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue pseudo right
+                    end if
+                else ' not a pseudo node
+                    if not node.m_child(1) is m_nil then
+                        set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
+                    end if
                 end if
-            end if
+                lcnt = lcnt-1
+            loop
+            wscript.stdout.writeline
+            lcnt = qc ' set level count to next level size
         loop
         wscript.stdout.writeline
     end sub
