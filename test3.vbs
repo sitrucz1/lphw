@@ -1,11 +1,11 @@
 option explicit
 
-const ITER = 100000
-const N = 2048
+const ITER = 50000
+const N = 4096
 
 sub main
     dim arr(), i, x : redim arr(N)
-    dim t(2), tstart, tend : t(0) = 0 : t(1) = 0 : t(2) = 0
+    dim t(3), tstart, tend : t(0) = 0 : t(1) = 0 : t(2) = 0 : t(3) = 0
     randomize timer
     for i = 0 to ubound(arr)
         arr(i) = i
@@ -25,16 +25,35 @@ sub main
         call bsearch2(arr, r)
         tend = timer
         t(2) = t(2) + tend-tstart
+        tstart = timer
+        call bsearchr(arr, r, lbound(arr), ubound(arr))
+        tend = timer
+        t(3) = t(3) + tend-tstart
     next
-    for i = 0 to 2
+    for i = lbound(t) to ubound(t)
         wscript.echo i, t(i)
     next
 end sub
 
+function bsearchr(byref arr(), byval v, byval l, byval r)
+    if l > r then
+        bsearchr = l
+    else
+        dim k : k = l+(r-l)\2
+        if v < arr(k) then
+            bsearchr = bsearchr(arr, v, l, k-1)
+        elseif v > arr(k) then
+            bsearchr = bsearchr(arr, v, k+1, r)
+        else
+            bsearchr = k
+        end if
+    end if
+end function
+
 function bsearch(byref arr(), byval v)
     dim k, l, r : l = lbound(arr) : r = ubound(arr)
     do while l <= r
-        k = l + (r-l) \ 2
+        k = l+(r-l)\2
         if v < arr(k) then
             r = k-1
         elseif v > arr(k) then
