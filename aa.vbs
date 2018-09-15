@@ -1,23 +1,27 @@
 option explicit
 
 sub main()
-    includefile "queue.vbs"     ' tqueue and tstack
     dim aat : set aat = new taat
     dim i, test : i = 0 : randomize timer : test = array(60,46,85,23,15,57,75,22,35,19,11)
     do while i <= ubound(test) and aat.isaat
         aat.aatputi(int(rnd*100) + 1)
         ' aat.aatputi(test(i))
-        ' aat.levelorderi
+        ' aat.levelorder
         i = i+1
     loop
-    aat.levelorderi
+    aat.levelorder
     wscript.echo aat.isaat
-    ' wscript.echo aat.aatfindi(aat.m_root.m_data).m_data
-    ' wscript.echo aat.aatfindi(500).m_data
+    aat.printtree
+    wscript.stdout.write "Press RETURN to continue..."
+    wscript.stdin.readline
+    wscript.echo aat.aatfindi(aat.m_root.m_data).m_data
+    wscript.echo aat.aatfindi(500).m_data
+    wscript.stdout.write "Press RETURN to continue..."
+    wscript.stdin.readline
     do until aat.isempty or not aat.isaat
         aat.aatdeletei(aat.m_root.m_data)
         ' aat.aatdeletei(22)
-        aat.levelorderi
+        aat.levelorder
     loop
 end sub
 
@@ -46,6 +50,7 @@ class taat
     public m_root
     public m_nil
     public m_cnt
+    public m_qsize
 
     private sub class_initialize()
         set m_nil = new taatnode
@@ -55,6 +60,7 @@ class taat
         set m_nil.m_child(1) = m_nil
         set m_root = m_nil
         m_cnt = 0
+        m_qsize = 50
     end sub
 
     private function isless(a, b)
@@ -166,80 +172,58 @@ class taat
     end function
 
     public function aatfindi(data)
-        dim node, x, way
-        set x = m_nil
-        set node = m_root
+        dim node : set node = m_root
         do until node is m_nil
-            if node.m_data <= data then
-                way = 1
-                set x = node
-            else
-                way = 0
+            if node.m_data = data then
+                set aatfindi = node
+                exit function
             end if
+            dim way : way = node.m_data < data and 1
             set node = node.m_child(way)
         loop
-        if not x is m_nil and x.m_data = data then
-            set node = x
-        end if
         set aatfindi = node
     end function
 
     public function aatputi(byval data)
         wscript.echo "** Inserting => ", data
-        dim node, na(50), wa(50), k, x
-        x = 0
-        k = 0
-        set na(k) = makefakehead
-        wa(k) = 1
+        dim node, na(50), wa(50), k ' stack
+        k = 0 : set na(k) = makefakehead : wa(k) = 1 ' push fake head
         set node = m_root
         do until node is m_nil
-            k = k+1
-            set na(k) = node
-            if node.m_data <= data then
-                wa(k) = 1
-                x = k
-            else
-                wa(k) = 0
+            if node.m_data = data then
+                set aatputi = node
+                exit function
             end if
+            k = k+1 : set na(k) = node : wa(k) = node.m_data < data and 1 ' push node
             set node = node.m_child(wa(k))
         loop
-        if x > 0 and na(x).m_data = data then ' found node
-            set node = na(x)
-        else
-            ' create the new node
-            set node = (new taatnode).init(data, m_nil)
-            ' update parent link
-            set na(k).m_child(wa(k)) = node
-            ' fixup
-            do until k < 1 or (na(k).m_level > na(k).m_child(0).m_level and na(k).m_level > na(k).m_child(1).m_level)
-                set na(k) = aatskew(na(k))
-                set na(k) = aatsplit(na(k))
-                set na(k-1).m_child(wa(k-1)) = na(k)
-                k = k-1
-            loop
-            ' update root
-            set m_root = na(0).m_child(1)
-            m_cnt = m_cnt+1
-        end if
+        ' create the new node
+        set node = (new taatnode).init(data, m_nil)
+        ' update parent link
+        set na(k).m_child(wa(k)) = node
+        ' fixup
+        do until k < 1 or (na(k).m_level > na(k).m_child(0).m_level and na(k).m_level > na(k).m_child(1).m_level)
+            set na(k) = aatskew(na(k))
+            set na(k) = aatsplit(na(k))
+            set na(k-1).m_child(wa(k-1)) = na(k)
+            k = k-1
+        loop
+        ' update root
+        set m_root = na(0).m_child(1)
+        m_cnt = m_cnt+1
         set aatputi = node
     end function
 
     public function aatdeletei(byval data)
         wscript.echo "** Deleting => ", data
-        dim node, na(50), wa(50), k, x
-        x = 0
-        k = 0
-        set na(k) = makefakehead
-        wa(k) = 1 ' fake root right child is real root
+        dim node, na(50), wa(50), k, x ' stack
+        x = 0 ' index of node on stack that is found
+        k = 0 : set na(k) = makefakehead : wa(k) = 1 ' push fake root
         set node = m_root
         do until node is m_nil
-            k = k+1
-            set na(k) = node
-            if node.m_data <= data then
-                wa(k) = 1
-                x = k
-            else
-                wa(k) = 0
+            k = k+1 : set na(k) = node : wa(k) = node.m_data <= data and 1 ' push node
+            if wa(k) = 1 then
+                x = k ' mark the critical node
             end if
             set node = node.m_child(wa(k))
         loop
@@ -249,8 +233,8 @@ class taat
             set aatdeletei = node   ' not found
             exit function
         end if
+        set node = na(k) ' save pointer to deleted node
         ' splice out the node
-        set node = na(k)
         na(x).m_data = na(k).m_data
         set na(k-1).m_child(wa(k-1)) = na(k).m_child(wa(k) xor 1)
         ' fixup
@@ -276,130 +260,64 @@ class taat
         set aatdeletei = node
     end function
 
-    public sub preorderi()
-        dim stack : set stack = new tstack
-        dim node : set node = m_root
-        do until node is m_nil and stack.isempty
-            if not node is m_nil then
-                wscript.stdout.write node.m_data & " "
-                stack.push node
-                set node = node.m_child(0)  ' left child
-            else
-                set node = stack.pop
-                set node = node.m_child(1)  ' right child
-            end if
-        loop
-        wscript.stdout.writeline
-    end sub
-
-    public sub inorderi()
-        dim stack : set stack = new tstack
-        dim node : set node = m_root
-        do until node is m_nil and stack.isempty
-            if not node is m_nil then
-                stack.push node
-                set node = node.m_child(0)  ' left child
-            else
-                set node = stack.pop
-                wscript.stdout.write node.m_data & " "
-                set node = node.m_child(1)  ' right child
-            end if
-        loop
-        wscript.stdout.writeline
-    end sub
-
-    public sub postorderi()
-        dim stack : set stack = new tstack
-        dim node, prev : set node = m_root : set prev = m_nil
-        do until node is m_nil and stack.isempty
-            if not node is m_nil then
-                stack.push node
-                set node = node.m_child(0)  ' left child
-            else
-                set node = stack.pop
-                if node.m_child(1) is m_nil or node.m_child(1) is prev then
-                    wscript.stdout.write node.m_data & " "
-                    set prev = node
-                    set node = m_nil
-                else
-                    stack.push node
-                    set node = node.m_child(1)  ' right child
-                end if
-            end if
-        loop
-        wscript.stdout.writeline
-    end sub
-
-    public sub levelorderi()
-        dim queue : set queue = new tqueue
+    public sub levelorder()
+        dim qq(), qh, qt, qc : redim qq(m_qsize-1) : qh = 0 : qt = 0 : qc = 0 ' queue variables
         if m_root is m_nil then
             exit sub
         end if
-        queue.enqueue m_root
-        do until queue.isempty
-            dim node : set node = queue.dequeue
+        set qq(qh) = m_root : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue root
+        do until qc = 0 ' queue empty
+            dim node : set node = qq(qt) : qt = (qt+1) mod m_qsize : qc = qc-1 ' dequeue
             wscript.stdout.write node.m_data & "," & node.m_level & " "
             if not node.m_child(0) is m_nil then
-                queue.enqueue node.m_child(0)
+                set qq(qh) = node.m_child(0) : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue left
             end if
             if not node.m_child(1) is m_nil then
-                queue.enqueue node.m_child(1)
+                set qq(qh) = node.m_child(1) : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue right
             end if
         loop
         wscript.stdout.writeline
     end sub
 
-    public function heighti()
-        dim stack : set stack = new tstack
-        dim node, prev : set node = m_root : set prev = m_nil
-        dim hcnt, hmax : hcnt = 0 : hmax = 0
-        do until node is m_nil and stack.isempty
-            if not node is m_nil then
-                stack.push node
-                hcnt = hcnt+1
-                set node = node.m_child(0)  ' left child
-            else
-                set node = stack.pop
-                if node.m_child(1) is m_nil or node.m_child(1) is prev then
-                    if hcnt > hmax then
-                        hmax = hcnt
-                    end if
-                    hcnt = hcnt-1
-                    set prev = node
-                    set node = m_nil
-                else
-                    stack.push node
-                    set node = node.m_child(1)  ' right child
-                end if
-            end if
-        loop
-        heighti = hmax
-    end function
-
-    public function heightiq()
-        dim queue : set queue = new tqueue
+    public sub printtree()
+        dim qq(), qh, qt, qc : redim qq(m_qsize-1) : qh = 0 : qt = 0 : qc = 0 ' queue variables
         if m_root is m_nil then
-            heightiq = 0
-            exit function
+            exit sub
         end if
-        queue.enqueue m_root
-        dim hcnt, lcnt : hcnt = 0 : lcnt = queue.length
-        do until queue.isempty
-            dim node : set node = queue.dequeue
-            if not node.m_child(0) is m_nil then
-                queue.enqueue node.m_child(0)   ' left child
-            end if
-            if not node.m_child(1) is m_nil then
-                queue.enqueue node.m_child(1)   ' right child
-            end if
-            lcnt = lcnt-1
-            if lcnt = 0 then        ' all done with current level
-                hcnt = hcnt+1
-                lcnt = queue.length ' set level count to next level size
-            end if
+        set qq(qh) = m_root : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue root
+        dim lcnt : lcnt = qc
+        do until qc = 0 ' queue empty
+            do until lcnt = 0
+                dim node : set node = qq(qt) : qt = (qt+1) mod m_qsize : qc = qc-1 ' dequeue
+                ' print the node and it's pseudo node if at the same level
+                dim rc : set rc = node.m_child(1)
+                wscript.stdout.write node.m_data
+                if node.m_level = rc.m_level then
+                    wscript.stdout.write "," & rc.m_data
+                end if
+                wscript.stdout.write "  "
+                if not node.m_child(0) is m_nil then
+                    set qq(qh) = node.m_child(0) : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue left
+                end if
+                if node.m_level = rc.m_level then ' process the pseudo node as well
+                    if not rc.m_child(0) is m_nil then
+                        set qq(qh) = rc.m_child(0) : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue pseudo left
+                    end if
+                    if not rc.m_child(1) is m_nil and rc.m_level <> rc.m_child(1).m_level then
+                        set qq(qh) = rc.m_child(1) : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue pseudo right
+                    end if
+                else ' not a pseudo node
+                    if not node.m_child(1) is m_nil then
+                        set qq(qh) = node.m_child(1) : qh = (qh+1) mod m_qsize : qc = qc+1 ' enqueue right
+                    end if
+                end if
+                lcnt = lcnt-1
+            loop
+            wscript.stdout.writeline
+            lcnt = qc ' set level count to next level size
         loop
-        heightiq = hcnt
-    end function
+        wscript.stdout.writeline
+    end sub
 
 end class
 
