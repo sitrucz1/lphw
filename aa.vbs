@@ -79,10 +79,6 @@ class taat
         end if
     end function
 
-    public function getlevel(byval node)
-        getlevel = node.m_level
-    end function
-
     public function isempty
         isempty = m_root is m_nil
     end function
@@ -108,9 +104,9 @@ class taat
             isaatnode = -1
         else
             dim lc, rc, grc
-            lc = getlevel(node.m_child(0))
-            rc = getlevel(node.m_child(1))
-            grc = getlevel(node.m_child(1).m_child(1))
+            lc = node.m_child(0).m_level
+            rc = node.m_child(1).m_level
+            grc = node.m_child(1).m_child(1).m_level
             if node.m_level <> lc+1 then
                 wscript.echo "ERROR: left child level is not one less than parent.", node.m_data
                 isaatnode = -1
@@ -147,7 +143,7 @@ class taat
     end function
 
     public function aatskew(byval node)
-        if getlevel(node) = getlevel(node.m_child(0)) then
+        if node.m_level = node.m_child(0).m_level then
             wscript.echo "Case 1 - Skew node.", node.m_data
             dim temp
             set temp = node
@@ -159,7 +155,7 @@ class taat
     end function
 
     public function aatsplit(byval node)
-        if getlevel(node) = getlevel(node.m_child(1).m_child(1)) then
+        if node.m_level = node.m_child(1).m_child(1).m_level then
             wscript.echo "Case 2 - Split node.", node.m_data
             dim temp
             set temp = node
@@ -228,7 +224,7 @@ class taat
             set node = node.m_child(wa(k))
         loop
         ' x is the found node. k is the leaf with 0 or 1 children
-        wscript.echo "x, k, xdata, kdata => ", x, k, na(x).m_data, na(k).m_data
+        ' wscript.echo "x, k, xdata, kdata => ", x, k, na(x).m_data, na(k).m_data
         if x = 0 or na(x).m_data <> data then
             set aatdeletei = node   ' not found
             exit function
@@ -239,9 +235,9 @@ class taat
         set na(k-1).m_child(wa(k-1)) = na(k).m_child(wa(k) xor 1)
         ' fixup
         for k = k-1 to 1 step -1
-            wscript.echo "Checking k, kdata => ", k, na(k).m_data
+            ' wscript.echo "Checking k, kdata => ", k, na(k).m_data
             if na(k).m_child(0).m_level < na(k).m_level-1 or na(k).m_child(1).m_level < na(k).m_level-1 then
-                wscript.echo "Fixup k, kdata => ", k, na(k).m_data
+                ' wscript.echo "Fixup k, kdata => ", k, na(k).m_data
                 na(k).m_level = na(k).m_level-1
                 if na(k).m_child(1).m_level > na(k).m_level then
                     na(k).m_child(1).m_level = na(k).m_level
