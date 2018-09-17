@@ -35,14 +35,12 @@ class trbnode
 
     public m_data
     public m_child(1) '0-left, 1-right
-    public m_parent
     public m_color
 
     public function init(byval data)
         m_data = data
         set m_child(0) = nothing
         set m_child(1) = nothing
-        set m_parent = nothing
         m_color = red
         set init = me
     end function
@@ -178,18 +176,7 @@ class trbtree
     public function rotate(byval node, byval way)
         dim root : set root = node.m_child(way xor 1)
         set node.m_child(way xor 1) = root.m_child(way)
-        if not root.m_child(way) is nothing then
-            set root.m_child(way).m_parent = node
-        end if
-        set root.m_parent = node.m_parent
-        if node.m_parent is nothing then
-            set m_root = root
-        else
-            dim wayp : wayp = (node is node.m_parent.m_child(1)) and 1
-            set node.m_parent.m_child(wayp) = root
-        end if
         set root.m_child(way) = node
-        set node.m_parent = root
         root.m_color = node.m_color
         node.m_color = red
         set rotate = root
@@ -201,17 +188,25 @@ class trbtree
         node.m_child(1).m_color = not node.m_color
     end sub
 
+    public function makefakehead
+        dim node : set node = (new trbnode).init(0)
+        node.m_color = black
+        set node.m_child(1) = m_root
+        set makefakehead = node
+    end function
+
     public function rbputi(byval data)
         wscript.echo "Insert", data
-        dim node, parent, way : set node = m_root : set parent = nothing
+        dim node, k, na(50), wa(50) ' stack
+        k = 0 : set na(k) = makefakehead : wa(k) = 1 ' push fake head
+        set node = m_root
         do until node is nothing
             if node.m_data = data then
                 set rbputi = node
                 exit function
             end if
-            set parent = node
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            k = k+1 : set na(k) = node : wa(k) = (node.m_data < data) and 1 ' push node
+            set node = node.m_child(wa(k))
         loop
         ' create the node
         set node = (new trbnode).init(data)
@@ -221,14 +216,29 @@ class trbtree
             exit function
         end if
         ' update the tree
-        set node.m_parent = parent
-        if parent is nothing then
-            set m_root = node
-        else
-            set parent.m_child(way) = node
-        end if
-        ' rebalance
-        rbputifixup node
+        k = k+1
+        set na(k-1).m_child(wa(k-1)) = node
+        ' fixup
+        do while isred(na(k-1))
+            if isred(na(k-2).m_child(wa(k-2) xor 1)) then
+                wscript.echo "Case 1 - Color Flip", na(k-2).m_data
+                colorflip na(k-2)
+                k = k-2
+            else
+                if isred(na(k-1).m_child(wa(k-2) xor 1)) then         ' case 2 - rotate l/r or r/l
+                    wscript.echo "Case 2 - Rotate", na(k-1).m_data, wa(k-2)
+                    set na(k-1) = rotate(na(k-1), wa(k-2))
+                    set na(k-2).m_child(wa(k-2)) = na(k-1)
+                end if
+                wscript.echo "Case 3 - Rotate", na(k-2).m_data, wa(k-2) xor 1
+                set na(k-2) = rotate(na(k-2), wa(k-2) xor 1)          ' case 3 - rotate ll or rr
+                set na(k-3).m_child(wa(k-3)) = na(k-2)
+                k = 1
+            end if
+        loop
+        ' update root and counts
+        set m_root = na(0).m_child(1)
+        m_root.m_color = black
         m_cnt = m_cnt+1
         set rbputi = node
     end function
@@ -255,47 +265,66 @@ class trbtree
 
     public function rbdeletei(byval data)
         wscript.echo "Deleting => ", data
-        dim node, q, way : set node = m_root
-        do until node is nothing ' or node.m_data = data
-            if node.m_data = data then
-                exit do
+        dim node, x, k, na(50), wa(50) ' stack
+        x = 0 ' found node
+        k = 0 : set na(k) = makefakehead : wa(k) = 1 ' push fake head
+        set node = m_root
+        do until node is nothing
+            k = k+1 : set na(k) = node : wa(k) = (node.m_data <= data) and 1 ' push node
+            if wa(k) = 1 then
+                x = k ' critical node
             end if
-            way = (node.m_data < data) and 1
-            set node = node.m_child(way)
+            set node = node.m_child(wa(k))
         loop
-        if node is nothing then ' not found
+        if x = 0 or na(x).m_data <> data then ' not found
             set rbdeletei = node
             exit function
         end if
-        if node.m_child(0) is nothing then     ' one child or leaf
-            set q = node.m_child(1)
-        elseif node.m_child(1) is nothing then ' one child or leaf
-            set q = node.m_child(0)
-        else                                   ' two children find successor
-            dim succ : set succ = node.m_child(1)
-            do until succ.m_child(0) is nothing
-                set succ = succ.m_child(0)
-            loop
-            node.m_data = succ.m_data
-            set node = succ
-            set q = node.m_child(1)
-        end if
-        ' node is to be deleted and q is successor node
-        if not isred(q) then
-            rbdeleteifixup node
-        end if
+        ' return value
+        set node = na(k) ' deleted node
         ' splice out node
-        if node.m_parent is nothing then
-            set m_root = q
-        else
-            way = (node is node.m_parent.m_child(1)) and 1
-            set node.m_parent.m_child(way) = q
+        na(x).m_data = na(k).m_data
+        set na(k) = na(k).m_child(wa(k) xor 1)
+        set na(k-1).m_child(wa(k-1)) = na(k)
+        dim saved_color : saved_color = na(k).m_color
+        if not na(k) is nothing then
+            na(k).m_color = black
         end if
-        ' update pointers
-        if not q is nothing then
-            set q.m_parent = node.m_parent
-            q.m_color = black
+        ' fixup
+        if saved_color = black then
+            do until k < 2 or isred(na(k))
+                dim way : way = wa(k-1)
+                dim sib : set sib = na(k-1).m_child(way xor 1)
+                if isred(sib) then                                              ' case 1 - red sibling case reduction
+                    wscript.echo "case 1 - red sibling case reduction - rotate", na(k-1).m_data, way
+                    set na(k-1) = rotate(na(k-1), way)
+                    set na(k-2).m_child(wa(k-2)) = na(k-1)
+                    set na(k) = na(k-1).m_child(way)
+                    k = k+1
+                    set sib = na(k-1).m_child(way xor 1)
+                end if
+                if not isred(sib.m_child(0)) and not isred(sib.m_child(1)) then ' case 2 - black sibling and black children - recolor sibling push problem up the tree
+                    wscript.echo "case 2 - black sibling and black children - recolor sibling and push problem up the tree", na(k-1).m_data, way
+                    sib.m_color = red
+                    k = k-1
+                else
+                    ' cjm begin here
+                    if not isred(sib.m_child(way xor 1)) then                   ' case 3 - lr/rl sibling red child - rotate
+                        wscript.echo "case 3 - lr/rl sibling red child - rotate", sib.m_data, way xor 1
+                        rotate sib, way xor 1
+                        ' set sib = node.m_parent.m_child(way xor 1)
+                    end if
+                    wscript.echo "case 4 - ll/rr sibling red child - rotate", node.m_parent.m_data, way
+                    rotate node.m_parent, way                                   ' case 4 - ll/rr sibling red child - rotate
+                    node.m_parent.m_color = black
+                    node.m_parent.m_parent.m_child(way xor 1).m_color = black
+                    set node = m_root
+                end if
+            loop
+            node.m_color = black
         end if
+        ' update root and counts
+        set m_root = na(0).m_child(1)
         m_cnt = m_cnt-1
         set rbdeletei = node
     end function
