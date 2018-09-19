@@ -5,6 +5,25 @@
 
 int main(int argc, char *argv[])
 {
+    theap *heap = NULL;
+
+    heap = heap_init(100);
+    heap_push(heap, 5);
+    heap_push(heap, 10);
+    heap_push(heap, 15);
+    heap_push(heap, 20);
+    heap_push(heap, 7);
+    heap_push(heap, 12);
+    heap_push(heap, 17);
+    heap_print(heap);
+    printf("Heap Valid => %d\n", heap_isheap(heap));
+    while (!heap_isempty(heap)) {
+        heap_pop(heap);
+        heap_print(heap);
+        printf("Heap Valid => %d\n", heap_isheap(heap));
+    }
+
+    heap_terminate(heap);
     return 0;
 }
 
@@ -23,6 +42,16 @@ theap *heap_init(int initsize)
         exit(1);
     }
     return heap;
+}
+
+int heap_isheap(theap *heap)
+{
+    for (int i = heap->m_cnt-1; i > 0; i--) {
+        int parent = (i-1)/2;
+        if (heap->m_arr[parent] > heap->m_arr[i])
+            return 0;
+    }
+    return 1;
 }
 
 void heap_siftdown(theap *heap, int root)
@@ -77,9 +106,11 @@ int heap_pop(theap *heap)
         exit(1);
     }
     int temp = heap->m_arr[0];
-    heap->m_arr[0] = heap->m_arr[heap->m_cnt-1];
     (heap->m_cnt)--;
-    heap_siftdown(heap, 0);
+    if (!heap_isempty(heap)) {
+        heap->m_arr[0] = heap->m_arr[heap->m_cnt];
+        heap_siftdown(heap, 0);
+    }
     return temp;
 }
 

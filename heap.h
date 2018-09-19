@@ -8,6 +8,7 @@ typedef struct {
 } theap;
 
 theap *heap_init(int);
+int  heap_isheap(theap *);
 int  heap_isfull(theap *);
 int  heap_isempty(theap *);
 void heap_siftdown(theap *, int);
