@@ -205,7 +205,7 @@ void aatreeprint(struct aatree *t)
 
 struct aanode *aaskew(struct aanode *n)
 {
-    if (n->m_level == n->m_left->m_level) {
+    if (n != nil && n->m_level == n->m_left->m_level) {
         printf("Case 1 - skew. %d\n", n->m_key);
         struct aanode *t = n;
         n = n->m_left;
@@ -217,7 +217,7 @@ struct aanode *aaskew(struct aanode *n)
 
 struct aanode *aasplit(struct aanode *n)
 {
-    if (n->m_level == n->m_right->m_right->m_level) {
+    if (n != nil && n->m_level == n->m_right->m_right->m_level) {
         printf("Case 2 - split. %d\n", n->m_key);
         struct aanode *t = n;
         n = n->m_right;
@@ -286,6 +286,7 @@ struct aanode *aatreeremoven(struct aatree *t, struct aanode *n, int key)
                 n = n->m_left;
             free(q);
             t->m_cnt--;
+            return n;
         }
     }
     // fixup
