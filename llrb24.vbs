@@ -14,9 +14,9 @@ sub main()
         ' tree.rbput(arr(i))
         tree.rbput(cint(rnd*100))
         ' tree.print
-        ' if not tree.isrbtree then
-        '     exit for
-        ' end if
+        if not tree.isrbtree then
+            exit for
+        end if
     next
     tree.print
     tree.printbtree
@@ -26,10 +26,10 @@ sub main()
     ' wscript.echo tree.rbget(1).m_key
     ' wscript.stdout.write "Press enter to continue..."
     ' wscript.stdin.readline
-    tree.printbtree
-    tree.isrbtree
+    ' tree.printbtree
+    ' tree.isrbtree
     do until tree.isempty or not tree.isrbtree
-        tree.rbdeletemin
+        tree.rbdeletemax
         tree.printbtree
     loop
 end sub
@@ -124,10 +124,10 @@ class trbtree
         elseif isless(node, node.m_left) or isless(node.m_right, node) then
             wscript.echo "ERROR: not a BST", node.m_key
             isrbnode = -1
-        elseif isred(node.m_right) then
-            wscript.echo "ERROR: right child is red", node.m_key
+        elseif not isred(node.m_left) and isred(node.m_right) then
+            wscript.echo "ERROR: right node is not left leaning", node.m_key
             isrbnode = -1
-        elseif isred(node) and isred(node.m_left) then
+        elseif isred(node) and (isred(node.m_left) or isred(node.m_right)) then
             wscript.echo "ERROR: two red nodes in a row", node.m_key
             isrbnode = -1
         else
@@ -184,7 +184,7 @@ class trbtree
                 dim node : set node = queue.dequeue
                 if isred(node.m_left) then ' red node
                     dim lc : set lc = node.m_left
-                    wscript.stdout.write lc.m_key & ","
+                    wscript.stdout.write lc.m_key
                     if not lc.m_left is nothing then
                         queue.enqueue lc.m_left     ' left left child
                     end if
@@ -192,14 +192,28 @@ class trbtree
                         queue.enqueue lc.m_right    ' left right child
                     end if
                 else                        ' black node
+                    wscript.stdout.write "*"
                     if not node.m_left is nothing then
                         queue.enqueue node.m_left   ' left child
                     end if
                 end if
-                wscript.stdout.write node.m_key & "  "
-                if not node.m_right is nothing then
-                    queue.enqueue node.m_right      ' right child
+                wscript.stdout.write "," & node.m_key
+                if isred(node.m_right) then ' red node
+                    dim rc : set rc = node.m_right
+                    wscript.stdout.write "," & rc.m_key
+                    if not rc.m_left is nothing then
+                        queue.enqueue rc.m_left     ' right left child
+                    end if
+                    if not rc.m_right is nothing then
+                        queue.enqueue rc.m_right    ' right right child
+                    end if
+                else                        ' black node
+                    wscript.stdout.write ",*"
+                    if not node.m_right is nothing then
+                        queue.enqueue node.m_right   ' right child
+                    end if
                 end if
+                wscript.stdout.write "  "
                 lcnt = lcnt-1
             loop
             wscript.stdout.writeline
@@ -227,6 +241,7 @@ class trbtree
     end function
 
     public function rotateleft(byval node)
+        wscript.echo "Rotate Left.", node.m_key
         dim root : set root = node.m_right
         set node.m_right = root.m_left
         set root.m_left = node
@@ -236,6 +251,7 @@ class trbtree
     end function
 
     public function rotateright(byval node)
+        wscript.echo "Rotate Right.", node.m_key
         dim root : set root = node.m_left
         set node.m_left = root.m_right
         set root.m_right = node
@@ -253,24 +269,22 @@ class trbtree
 
     public function rbbalance(byval node)
         if isred(node.m_right) then
-            wscript.echo "Case 1 - Rotate Left", node.m_key
             set node = rotateleft(node)
         end if
         if isred(node.m_left) then
             if isred(node.m_left.m_left) then
-                wscript.echo "Case 2 - Rotate Right", node.m_key
                 set node = rotateright(node)
             end if
         end if
-        if isred(node.m_left) and isred(node.m_right) then
-            wscript.echo "Case 3 - Color Flip", node.m_key
-            colorflip node
-        end if
+        ' if isred(node.m_left) and isred(node.m_right) then
+        '     wscript.echo "Case 3 - Color Flip", node.m_key
+        '     colorflip node
+        ' end if
         set rbbalance = node
     end function
 
     public function rbput(byval key)
-        wscript.echo "Insert", key
+        wscript.echo "** Inserting => ", key
         set m_root = rbputn(m_root, key)
         m_root.m_color = black
         set rbput = m_root
@@ -281,6 +295,10 @@ class trbtree
             set node = (new trbnode).init(key)
             m_cnt = m_cnt+1
         else
+            if isred(node.m_left) and isred(node.m_right) then
+                colorflip node
+            end if
+
             if key < node.m_key then
                 set node.m_left = rbputn(node.m_left, key)
             elseif key > node.m_key then
@@ -297,22 +315,28 @@ class trbtree
                     set node = rotateright(node)
                 end if
             end if
-            if isred(node.m_left) and isred(node.m_right) then
-                colorflip node
-            end if
         end if
         set rbputn = node
     end function
 
     public function moveredleft(byval node)
         ' assert: not node is nothing
-        ' assert: isred(node) and not isred(node.m_left) and not isred(node.m_right)
+        ' assert: isred(node) and not isred(node.m_left)
         wscript.echo "Move Red Left.", node.m_key
         colorflip node
+        ' if isred(node.m_right.m_right) then
+        '     set node = rotateleft(node)
+        '     colorflip node
         if isred(node.m_right.m_left) then
             set node.m_right = rotateright(node.m_right)
             set node = rotateleft(node)
             colorflip node
+        elseif isred(node.m_right.m_right) then
+            set node = rotateleft(node)
+            colorflip node
+        end if
+        if isred(node.m_right.m_right) then
+            set node.m_right = rotateleft(node.m_right)
         end if
         set moveredleft = node
     end function
@@ -322,9 +346,16 @@ class trbtree
         ' assert: isred(node) and not isred(node.m_right) and not isred(node.m_right.m_left)
         wscript.echo "Move Red Right.", node.m_key
         colorflip node
-        if isred(node.m_left.m_left) then
+        if isred(node.m_left.m_right) then
+            set node.m_left = rotateleft(node.m_left)
             set node = rotateright(node)
             colorflip node
+        elseif isred(node.m_left.m_left) then
+            set node = rotateright(node)
+            colorflip node
+        end if
+        if isred(node.m_left.m_right) then
+            set node.m_left = rotateleft(node.m_right)
         end if
         set moveredright = node
     end function
@@ -345,7 +376,7 @@ class trbtree
 
     public function rbdeletemaxn(byval node)
         ' right lean red nodes
-        if isred(node.m_left) then
+        if not isred(node.m_right) and isred(node.m_left) then
             set node = rotateright(node)
         end if
         ' Are we at the max node?
@@ -422,6 +453,7 @@ class trbtree
                 set node = rotateright(node)
             end if
             if key = node.m_key and node.m_right is nothing then
+                m_cnt = m_cnt-1
                 set node = nothing
             else
                 if not isred(node.m_right) then
