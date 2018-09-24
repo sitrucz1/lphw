@@ -1,3 +1,6 @@
+'
+' llrb24.vbs - A left leaning 2-4 red black tree implementation.
+'
 option explicit
 
 const red = true
@@ -9,7 +12,7 @@ sub main()
     ' dim i, arr : arr = array(3,5)
     dim tree : set tree = new trbtree
     randomize timer
-    for i=1 to 30
+    for i=1 to 10
     ' for i = 0 to ubound(arr)
         ' tree.rbput(arr(i))
         tree.rbput(cint(rnd*100))
@@ -30,6 +33,7 @@ sub main()
     ' tree.isrbtree
     do until tree.isempty or not tree.isrbtree
         tree.rbdeletemin
+        ' tree.rbdelete(tree.m_root.m_key)
         tree.printbtree
     loop
 end sub
@@ -268,6 +272,7 @@ class trbtree
     end sub
 
     public function rbbalance(byval node)
+        wscript.echo "Balance.", node.m_key
         if isred(node.m_right) then
             set node = rotateleft(node)
         end if
@@ -303,7 +308,7 @@ class trbtree
                 node.m_key = key
             end if
 
-            if isred(node.m_right) then
+            if isred(node.m_right) and not isred(node.m_left) then
                 set node = rotateleft(node)
             end if
             if isred(node.m_left) then
@@ -315,16 +320,25 @@ class trbtree
         set rbputn = node
     end function
 
+    public function succ(byval node)
+        set node = node.m_right
+        do until node.m_left is nothing
+            set node = node.m_left
+        loop
+        set succ = node
+    end function
+
     public function moveredleft(byval node)
         ' assert: not node is nothing
         ' assert: isred(node) and not isred(node.m_left)
         wscript.echo "Move Red Left.", node.m_key
         colorflip node
-        if isred(node.m_right.m_left) then
+        if isred(node.m_right.m_left) then ' 3 and 4 node always leans left
             set node.m_right = rotateright(node.m_right)
             set node = rotateleft(node)
             colorflip node
         end if
+        ' if it was a 4 node above we have a right leaning red child so make it lean left
         if isred(node.m_right.m_right) then
             set node.m_right = rotateleft(node.m_right)
         end if
@@ -336,30 +350,28 @@ class trbtree
         ' assert: isred(node) and not isred(node.m_right) and not isred(node.m_right.m_left)
         wscript.echo "Move Red Right.", node.m_key
         colorflip node
-        if isred(node.m_left.m_right) then
+        if isred(node.m_left.m_right) then ' 4 node leans right.
             set node.m_left = rotateleft(node.m_left)
             set node = rotateright(node)
             colorflip node
-        elseif isred(node.m_left.m_left) then
+        elseif isred(node.m_left.m_left) then ' 3 node leans left.
             set node = rotateright(node)
             colorflip node
         end if
-        ' if not isred(node.m_left.m_left) and isred(node.m_left.m_right) then
-        '     set node.m_left = rotateleft(node.m_left)
-        ' end if
+        ' if it was a 4 node above then we already have a left leaning red child so fixup not needed as in moveredleft
         set moveredright = node
     end function
 
     public function rbdeletemax()
         wscript.echo "** Deleting max."
-        if not m_root is nothing then
+        if not isempty then
             if not isred(m_root.m_left) and not isred(m_root.m_right) then
                 m_root.m_color = red
             end if
-        end if
-        set m_root = rbdeletemaxn(m_root)
-        if not isempty then
-            m_root.m_color = black
+            set m_root = rbdeletemaxn(m_root)
+            if not isempty then
+                m_root.m_color = black
+            end if
         end if
         set rbdeletemax = nothing
     end function
@@ -368,7 +380,6 @@ class trbtree
         if not isred(node.m_right) and isred(node.m_left) then
             set node = rotateright(node)
         end if
-        ' Are we at the max node?
         if node.m_right is nothing then
             m_cnt = m_cnt-1
             set node = nothing
@@ -386,14 +397,14 @@ class trbtree
 
     public function rbdeletemin()
         wscript.echo "** Deleting min."
-        if not m_root is nothing then
+        if not isempty then
             if not isred(m_root.m_left) and not isred(m_root.m_right) then
                 m_root.m_color = red
             end if
-        end if
-        set m_root = rbdeleteminn(m_root)
-        if not isempty then
-            m_root.m_color = black
+            set m_root = rbdeleteminn(m_root)
+            if not isempty then
+                m_root.m_color = black
+            end if
         end if
         set rbdeletemin = nothing
     end function
@@ -430,10 +441,8 @@ class trbtree
 
     public function rbdeleten(byval node, byval key)
         if key < node.m_key then
-            if not isred(node.m_left) then
-                if not isred(node.m_left.m_left) then
-                    set node = moveredleft(node)
-                end if
+            if not isred(node.m_left) and not isred(node.m_left.m_left) then
+                set node = moveredleft(node)
             end if
             set node.m_left = rbdeleten(node.m_left, key)
         else
@@ -444,18 +453,13 @@ class trbtree
                 m_cnt = m_cnt-1
                 set node = nothing
             else
-                if not isred(node.m_right) then
-                    if not isred(node.m_right.m_left) then
-                        set node = moveredright(node)
-                    end if
+                if not isred(node.m_right) and not isred(node.m_right.m_left) then
+                    set node = moveredright(node)
                 end if
                 if (key = node.m_key) then
-                    dim s : set s = node.m_right
-                    do until s.m_left is nothing
-                        set s = s.m_left
-                    loop
+                    dim s : set s = succ(node)
                     node.m_key = s.m_key
-                    set node.m_right = rbdeletemin(node.m_right)
+                    set node.m_right = rbdeleteminn(node.m_right)
                 else
                     set node.m_right = rbdeleten(node.m_right, key)
                 end if
