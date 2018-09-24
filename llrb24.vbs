@@ -9,7 +9,7 @@ sub main()
     ' dim i, arr : arr = array(3,5)
     dim tree : set tree = new trbtree
     randomize timer
-    for i=1 to 50
+    for i=1 to 30
     ' for i = 0 to ubound(arr)
         ' tree.rbput(arr(i))
         tree.rbput(cint(rnd*100))
@@ -29,7 +29,7 @@ sub main()
     ' tree.printbtree
     ' tree.isrbtree
     do until tree.isempty or not tree.isrbtree
-        tree.rbdeletemax
+        tree.rbdeletemin
         tree.printbtree
     loop
 end sub
@@ -276,10 +276,6 @@ class trbtree
                 set node = rotateright(node)
             end if
         end if
-        ' if isred(node.m_left) and isred(node.m_right) then
-        '     wscript.echo "Case 3 - Color Flip", node.m_key
-        '     colorflip node
-        ' end if
         set rbbalance = node
     end function
 
@@ -324,14 +320,8 @@ class trbtree
         ' assert: isred(node) and not isred(node.m_left)
         wscript.echo "Move Red Left.", node.m_key
         colorflip node
-        ' if isred(node.m_right.m_right) then
-        '     set node = rotateleft(node)
-        '     colorflip node
         if isred(node.m_right.m_left) then
             set node.m_right = rotateright(node.m_right)
-            set node = rotateleft(node)
-            colorflip node
-        elseif isred(node.m_right.m_right) then
             set node = rotateleft(node)
             colorflip node
         end if
@@ -354,9 +344,9 @@ class trbtree
             set node = rotateright(node)
             colorflip node
         end if
-        if isred(node.m_left.m_right) then
-            set node.m_left = rotateleft(node.m_right)
-        end if
+        ' if not isred(node.m_left.m_left) and isred(node.m_left.m_right) then
+        '     set node.m_left = rotateleft(node.m_left)
+        ' end if
         set moveredright = node
     end function
 
@@ -375,7 +365,6 @@ class trbtree
     end function
 
     public function rbdeletemaxn(byval node)
-        ' right lean red nodes
         if not isred(node.m_right) and isred(node.m_left) then
             set node = rotateright(node)
         end if
@@ -397,7 +386,6 @@ class trbtree
 
     public function rbdeletemin()
         wscript.echo "** Deleting min."
-        ' No need to left lean since this is an llrb tree.  3 node is left and 4 node already has a left red child
         if not m_root is nothing then
             if not isred(m_root.m_left) and not isred(m_root.m_right) then
                 m_root.m_color = red
@@ -449,7 +437,7 @@ class trbtree
             end if
             set node.m_left = rbdeleten(node.m_left, key)
         else
-            if isred(node.m_left) then
+            if not isred(node.m_right) and isred(node.m_left) then
                 set node = rotateright(node)
             end if
             if key = node.m_key and node.m_right is nothing then
