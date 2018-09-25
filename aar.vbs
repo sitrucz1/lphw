@@ -25,9 +25,11 @@ sub main()
     wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
     ' deleting data
     do until aat.isempty or not aat.isaat
-        aat.aatdelete(aat.m_root.m_data)
+        ' aat.aatdelete(aat.m_root.m_data)
+        aat.aatdeletemin
         ' aat.aatdelete(22)
-        aat.levelorder
+        ' aat.levelorder
+        aat.printtree
     loop
 end sub
 
@@ -206,6 +208,51 @@ class taat
         set aatputnode = node
     end function
 
+    public function aatbalance(byval node)
+        if node.m_child(0).m_level < node.m_level-1 or node.m_child(1).m_level < node.m_level-1 then
+            node.m_level = node.m_level-1
+            if node.m_child(1).m_level > node.m_level then
+                node.m_child(1).m_level = node.m_level
+            end if
+            set node = aatskew(node)
+            set node.m_child(1) = aatskew(node.m_child(1))
+            set node.m_child(1).m_child(1) = aatskew(node.m_child(1).m_child(1))
+            set node = aatsplit(node)
+            set node.m_child(1) = aatsplit(node.m_child(1))
+        end if
+        set aatbalance = node
+    end function
+
+    public function aatdeletemin()
+        wscript.echo "** Deleting min."
+        set m_root = aatdeleteminn(m_root)
+        set aatdeletemin = m_nil
+    end function
+
+    public function aatdeleteminn(byval node)
+        if node.m_child(0) is m_nil then
+            set aatdeleteminn = node.m_child(1)
+            exit function
+        end if
+        set node.m_child(0) = aatdeleteminn(node.m_child(0))
+        set aatdeleteminn = aatbalance(node)
+    end function
+
+    public function aatdeletemax()
+        wscript.echo "** Deleting max."
+        set m_root = aatdeletemaxn(m_root)
+        set aatdeletemax = m_nil
+    end function
+
+    public function aatdeletemaxn(byval node)
+        if node.m_child(1) is m_nil then
+            set aatdeletemaxn = node.m_child(0)
+            exit function
+        end if
+        set node.m_child(1) = aatdeletemaxn(node.m_child(1))
+        set aatdeletemaxn = aatbalance(node)
+    end function
+
     public function aatdelete(byval data)
         wscript.echo "** Deleting => ", data
         set m_root = aatdeletenode(m_root, data)
@@ -236,19 +283,7 @@ class taat
                 m_cnt = m_cnt-1
             end if
         end if
-        ' fixup
-        if node.m_child(0).m_level < node.m_level-1 or node.m_child(1).m_level < node.m_level-1 then
-            node.m_level = node.m_level-1
-            if node.m_child(1).m_level > node.m_level then
-                node.m_child(1).m_level = node.m_level
-            end if
-            set node = aatskew(node)
-            set node.m_child(1) = aatskew(node.m_child(1))
-            set node.m_child(1).m_child(1) = aatskew(node.m_child(1).m_child(1))
-            set node = aatsplit(node)
-            set node.m_child(1) = aatsplit(node.m_child(1))
-        end if
-        set aatdeletenode = node
+        set aatdeletenode = aatbalance(node)
     end function
 
     public sub preorder

@@ -31,11 +31,11 @@ sub main()
     ' wscript.stdin.readline
     ' tree.printbtree
     ' tree.isrbtree
-    ' do until tree.isempty or not tree.isrbtree
-        ' tree.rbdeletemin
-        tree.rbdelete(50)
+    do until tree.isempty or not tree.isrbtree
+        tree.rbdeletemin
+        ' tree.rbdelete(tree.m_root.m_key)
         tree.printbtree
-    ' loop
+    loop
 end sub
 
 sub includefile(fspec)

@@ -12,7 +12,7 @@ sub main()
     ' dim i, arr : arr = array(3,5)
     dim tree : set tree = new trbtree
     randomize timer
-    for i=1 to 10
+    for i=1 to 30
     ' for i = 0 to ubound(arr)
         ' tree.rbput(arr(i))
         tree.rbput(cint(rnd*100))
