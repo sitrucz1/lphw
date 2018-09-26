@@ -19,7 +19,7 @@ sub main()
     wscript.echo "** Height, level, count, log2n, 2log2n => ", aat.height, aat.m_root.m_level, aat.m_cnt, int(log(aat.m_cnt) / log(2)), 2*int(log(aat.m_cnt) / log(2))
     aat.printtree
     wscript.echo aat.inorder
-    wscript.echo aat.getfloor(43).m_data
+    wscript.echo aat.getceiling(43).m_data
     wscript.echo aat.getmin.m_data
     wscript.echo aat.getmax.m_data
     wscript.echo aat.getindexof(-1).m_data
@@ -184,45 +184,35 @@ class taat
 
     public function getfloor(byval key)
         wscript.echo "Getfloor => ", key
-        set getfloor = getfloorn(m_root, key)
+        set getfloor = getfloorn(m_root, key, m_nil)
     end function
 
-    public function getfloorn(byval node, byval key)
+    public function getfloorn(byval node, byval key, byval best)
         if node is m_nil then
-            set getfloorn = m_nil
+            set getfloorn = best
         elseif key = node.m_data then
             set getfloorn = node
         elseif key < node.m_data then
-            set getfloorn = getfloorn(node.m_child(0), key)
+            set getfloorn = getfloorn(node.m_child(0), key, best)
         else
-            dim t : set t = getfloorn(node.m_child(1), key)
-            if t is m_nil then
-                set getfloorn = node
-            else
-                set getfloorn = t
-            end if
+            set getfloorn = getfloorn(node.m_child(1), key, node)
         end if
     end function
 
     public function getceiling(byval key)
         wscript.echo "Getceiling => ", key
-        set getceiling = getceilingn(m_root, key)
+        set getceiling = getceilingn(m_root, key, m_nil)
     end function
 
-    public function getceilingn(byval node, byval key)
+    public function getceilingn(byval node, byval key, byval best)
         if node is m_nil then
-            set getceilingn = m_nil
+            set getceilingn = best
         elseif key = node.m_data then
             set getceilingn = node
         elseif key > node.m_data then
-            set getceilingn = getceilingn(node.m_child(1), key)
+            set getceilingn = getceilingn(node.m_child(1), key, best)
         else
-            dim t : set t = getceilingn(node.m_child(0), key)
-            if t is m_nil then
-                set getceilingn = node
-            else
-                set getceilingn = t
-            end if
+            set getceilingn = getceilingn(node.m_child(0), key, node)
         end if
     end function
 
