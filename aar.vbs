@@ -19,7 +19,7 @@ sub main()
     wscript.echo "** Height, level, count, log2n, 2log2n => ", aat.height, aat.m_root.m_level, aat.m_cnt, int(log(aat.m_cnt) / log(2)), 2*int(log(aat.m_cnt) / log(2))
     aat.printtree
     wscript.echo aat.inorder
-    wscript.echo aat.getceiling(43).m_data
+    wscript.echo aat.getfloor(43).m_data
     wscript.echo aat.getmin.m_data
     wscript.echo aat.getmax.m_data
     wscript.echo aat.getindexof(-1).m_data
@@ -29,6 +29,7 @@ sub main()
     wscript.echo aat.getindex(22)
     wscript.echo aat.getindex(85)
     wscript.echo aat.getindex(35)
+    wscript.echo aat.getindex(-1)
     wscript.echo aat.getindex(105)
     wscript.echo aat.getindex(11)
     wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
@@ -37,13 +38,13 @@ sub main()
     wscript.echo aat.aatfind(500).m_data
     wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
     ' deleting data
-    ' do until aat.isempty or not aat.isaat or not aat.sizevalid
+    do until aat.isempty or not aat.isaat or not aat.sizevalid
         ' aat.aatdelete(aat.m_root.m_data)
-        ' aat.aatdeletemin
-        aat.aatdelete(22)
+        aat.aatdeletemin
+        ' aat.aatdelete(22)
         ' aat.levelorder
         aat.printtree
-    ' loop
+    loop
 end sub
 
 sub includefile(fspec)
@@ -184,35 +185,45 @@ class taat
 
     public function getfloor(byval key)
         wscript.echo "Getfloor => ", key
-        set getfloor = getfloorn(m_root, key, m_nil)
+        set getfloor = getfloorn(m_root, key)
     end function
 
-    public function getfloorn(byval node, byval key, byval best)
+    public function getfloorn(byval node, byval key)
         if node is m_nil then
-            set getfloorn = best
+            set getfloorn = m_nil
         elseif key = node.m_data then
             set getfloorn = node
         elseif key < node.m_data then
-            set getfloorn = getfloorn(node.m_child(0), key, best)
+            set getfloorn = getfloorn(node.m_child(0), key)
         else
-            set getfloorn = getfloorn(node.m_child(1), key, node)
+            dim rc : set rc = getfloorn(node.m_child(1), key)
+            if rc is m_nil then
+                set getfloorn = node
+            else
+                set getfloorn = rc
+            end if
         end if
     end function
 
     public function getceiling(byval key)
         wscript.echo "Getceiling => ", key
-        set getceiling = getceilingn(m_root, key, m_nil)
+        set getceiling = getceilingn(m_root, key)
     end function
 
-    public function getceilingn(byval node, byval key, byval best)
+    public function getceilingn(byval node, byval key)
         if node is m_nil then
-            set getceilingn = best
+            set getceilingn = m_nil
         elseif key = node.m_data then
             set getceilingn = node
         elseif key > node.m_data then
-            set getceilingn = getceilingn(node.m_child(1), key, best)
+            set getceilingn = getceilingn(node.m_child(1), key)
         else
-            set getceilingn = getceilingn(node.m_child(0), key, node)
+            dim lc : set lc = getceilingn(node.m_child(0), key)
+            if lc is m_nil then
+                set getceilingn = node
+            else
+                set getceilingn = lc
+            end if
         end if
     end function
 
@@ -230,7 +241,7 @@ class taat
             set getminn = getminn(node.m_child(0))
         end if
     end function
-            
+
     public function getmax()
         wscript.echo "Getmax"
         set getmax = getmaxn(m_root)
@@ -245,21 +256,26 @@ class taat
             set getmaxn = getmaxn(node.m_child(1))
         end if
     end function
-            
+
     public function getindex(byval key)
         wscript.echo "Getindex => ", key
-        getindex = getindexn(m_root, key, 0)
+        getindex = getindexn(m_root, key)
     end function
 
-    public function getindexn(byval node, byval key, byval index)
+    public function getindexn(byval node, byval key)
         if node is m_nil then
             getindexn = -1
         elseif key = node.m_data then
-            getindexn = aasize(node.m_child(0)) + index
+            getindexn = aasize(node.m_child(0))
         elseif key < node.m_data then
-            getindexn = getindexn(node.m_child(0), key, index)
+            getindexn = getindexn(node.m_child(0), key)
         else
-            getindexn = getindexn(node.m_child(1), key, 1 + aasize(node.m_child(0)) + index)
+            dim rc : rc = getindexn(node.m_child(1), key)
+            if rc = -1 then
+                getindexn = rc
+            else
+                getindexn = 1 + aasize(node.m_child(0)) + rc
+            end if
         end if
     end function
 
@@ -549,28 +565,15 @@ class taat
     end sub
 
     public function height()
-        dim qq(), qh, qt, qc : redim qq(QSIZE-1) : qh = 0 : qt = 0 : qc = 0 ' queue variables
-        if m_root is m_nil then
-            height = 0
-            exit function
+        height = heightn(m_root)
+    end function
+
+    public function heightn(byval node)
+        if node is m_nil then
+            heightn = 0
+        else
+            heightn = 1 + max(heightn(node.m_child(0)), heightn(node.m_child(1)))
         end if
-        set qq(qh) = m_root : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue root
-        dim hcnt, lcnt : hcnt = 0 : lcnt = qc
-        do until qc = 0 ' queue empty
-            do until lcnt = 0
-                dim node : set node = qq(qt) : qt = (qt+1) mod QSIZE : qc = qc-1     ' dequeue
-                if not node.m_child(0) is m_nil then
-                    set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
-                end if
-                if not node.m_child(1) is m_nil then
-                    set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
-                end if
-                lcnt = lcnt-1
-            loop
-            hcnt = hcnt+1
-            lcnt = qc ' set level count to next level size
-        loop
-        height = hcnt
     end function
 
 end class
