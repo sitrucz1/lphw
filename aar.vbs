@@ -7,10 +7,10 @@ sub main()
     dim aat : set aat = new taat
     dim i, test : i = 0 : randomize timer : test = array(60,22,37,46,85,23,15,57,75,22,35,19,11)
     ' inserting data
-    ' do while i <= ubound(test) and aat.isaat
-    do while i <= 16 and aat.isaat
-        aat.aatput(int(rnd*100) + 1)
-        ' aat.aatput(test(i))
+    do while i <= ubound(test) and aat.isaat and aat.sizevalid
+    ' do while i <= 16 and aat.isaat and aat.rankvalid
+        ' aat.aatput(int(rnd*100) + 1)
+        aat.aatput(test(i))
         aat.levelorder
         i = i+1
     loop
@@ -18,16 +18,32 @@ sub main()
     wscript.echo aat.isaat
     wscript.echo "** Height, level, count, log2n, 2log2n => ", aat.height, aat.m_root.m_level, aat.m_cnt, int(log(aat.m_cnt) / log(2)), 2*int(log(aat.m_cnt) / log(2))
     aat.printtree
+    wscript.echo aat.inorder
+    wscript.echo aat.getfloor(43).m_data
+    wscript.echo aat.getmin.m_data
+    wscript.echo aat.getmax.m_data
+    wscript.echo aat.getindexof(-1).m_data
+    wscript.echo aat.getindexof(0).m_data
+    wscript.echo aat.getindexof(5).m_data
+    wscript.echo aat.getindexof(3).m_data
+    wscript.echo aat.getindex(22)
+    wscript.echo aat.getindex(85)
+    wscript.echo aat.getindex(35)
+    wscript.echo aat.getindex(-1)
+    wscript.echo aat.getindex(105)
+    wscript.echo aat.getindex(11)
     wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
     ' finding data
     wscript.echo aat.aatfind(aat.m_root.m_data).m_data
     wscript.echo aat.aatfind(500).m_data
     wscript.stdout.write "Press return key to continue..." : wscript.stdin.readline
     ' deleting data
-    do until aat.isempty or not aat.isaat
-        aat.aatdelete(aat.m_root.m_data)
+    do until aat.isempty or not aat.isaat or not aat.sizevalid
+        ' aat.aatdelete(aat.m_root.m_data)
+        aat.aatdeletemin
         ' aat.aatdelete(22)
-        aat.levelorder
+        ' aat.levelorder
+        aat.printtree
     loop
 end sub
 
@@ -40,12 +56,14 @@ class taatnode
     public m_data
     public m_level
     public m_child(1)
+    public m_size
 
     public function init(byval data, byval nilnode)
         m_data = data
         m_level = 1
         set m_child(0) = nilnode
         set m_child(1) = nilnode
+        m_size = 1
         set init = me
     end function
 
@@ -142,6 +160,166 @@ class taat
         end if
     end function
 
+    public function sizevalid()
+        sizevalid = (sizevalidn(m_root) <> -1)
+    end function
+
+    public function sizevalidn(byval node)
+        if node is m_nil then
+            sizevalidn = 0
+        else
+            dim lc, rc, t
+            lc = sizevalidn(node.m_child(0))
+            rc = sizevalidn(node.m_child(1))
+            t = 1+lc+rc
+            ' wscript.echo "key, m_size, size => ", node.m_data, node.m_size, t
+            if lc = -1 or rc = -1 then
+                sizevalidn = -1
+            elseif t <> node.m_size then
+                sizevalidn = -1
+            else
+                sizevalidn = t
+            end if
+        end if
+    end function
+
+    public function getfloor(byval key)
+        wscript.echo "Getfloor => ", key
+        set getfloor = getfloorn(m_root, key)
+    end function
+
+    public function getfloorn(byval node, byval key)
+        if node is m_nil then
+            set getfloorn = m_nil
+        elseif key = node.m_data then
+            set getfloorn = node
+        elseif key < node.m_data then
+            set getfloorn = getfloorn(node.m_child(0), key)
+        else
+            dim rc : set rc = getfloorn(node.m_child(1), key)
+            if rc is m_nil then
+                set getfloorn = node
+            else
+                set getfloorn = rc
+            end if
+        end if
+    end function
+
+    public function getceiling(byval key)
+        wscript.echo "Getceiling => ", key
+        set getceiling = getceilingn(m_root, key)
+    end function
+
+    public function getceilingn(byval node, byval key)
+        if node is m_nil then
+            set getceilingn = m_nil
+        elseif key = node.m_data then
+            set getceilingn = node
+        elseif key > node.m_data then
+            set getceilingn = getceilingn(node.m_child(1), key)
+        else
+            dim lc : set lc = getceilingn(node.m_child(0), key)
+            if lc is m_nil then
+                set getceilingn = node
+            else
+                set getceilingn = lc
+            end if
+        end if
+    end function
+
+    public function getmin()
+        wscript.echo "Getmin"
+        set getmin = getminn(m_root)
+    end function
+
+    public function getminn(byval node)
+        if node is m_nil then
+            set getminn = m_nil
+        elseif node.m_child(0) is m_nil then
+            set getminn = node
+        else
+            set getminn = getminn(node.m_child(0))
+        end if
+    end function
+
+    public function getmax()
+        wscript.echo "Getmax"
+        set getmax = getmaxn(m_root)
+    end function
+
+    public function getmaxn(byval node)
+        if node is m_nil then
+            set getmaxn = m_nil
+        elseif node.m_child(1) is m_nil then
+            set getmaxn = node
+        else
+            set getmaxn = getmaxn(node.m_child(1))
+        end if
+    end function
+
+    public function getindex(byval key)
+        wscript.echo "Getindex => ", key
+        getindex = getindexn(m_root, key)
+    end function
+
+    public function getindexn(byval node, byval key)
+        if node is m_nil then
+            getindexn = -1
+        elseif key = node.m_data then
+            getindexn = aasize(node.m_child(0))
+        elseif key < node.m_data then
+            getindexn = getindexn(node.m_child(0), key)
+        else
+            dim rc : rc = getindexn(node.m_child(1), key)
+            if rc = -1 then
+                getindexn = rc
+            else
+                getindexn = 1 + aasize(node.m_child(0)) + rc
+            end if
+        end if
+    end function
+
+    public function getindexof(byval index)
+        wscript.echo "Getindexof => ", index
+        if index < -1 or index > m_cnt-1 then
+            set getindexof = m_nil
+        elseif index = -1 then
+            set getindexof = getindexofn(m_root, m_cnt-1)
+        else
+            set getindexof = getindexofn(m_root, index)
+        end if
+    end function
+
+    public function getindexofn(byval node, byval index)
+        if node is m_nil then
+            set getindexofn = m_nil
+        else
+            dim t : t = aasize(node.m_child(0))
+            ' wscript.echo "key, index, t => ", node.m_data, index, t
+            if index < t then
+                set getindexofn = getindexofn(node.m_child(0), index)
+            elseif index > t then
+                set getindexofn = getindexofn(node.m_child(1), index-t-1)
+            else
+                set getindexofn = node
+            end if
+        end if
+    end function
+
+    public sub aasetsize(byval node)
+        if not node is m_nil then
+            node.m_size = 1 + aasize(node.m_child(0)) + aasize(node.m_child(1))
+        end if
+    end sub
+
+    public function aasize(byval node)
+        if node is m_nil then
+            aasize = 0
+        else
+            aasize = node.m_size
+        end if
+    end function
+
     public function aatskew(byval node)
         if not node is m_nil and getlevel(node) = getlevel(node.m_child(0)) then
             wscript.echo "Case 1 - Skew node.", node.m_data
@@ -150,6 +328,8 @@ class taat
             set node = temp.m_child(0)
             set temp.m_child(0) = node.m_child(1)
             set node.m_child(1) = temp
+            aasetsize temp
+            aasetsize node
         end if
         set aatskew = node
     end function
@@ -163,6 +343,8 @@ class taat
             set temp.m_child(1) = node.m_child(0)
             set node.m_child(0) = temp
             node.m_level = node.m_level+1
+            aasetsize temp
+            aasetsize node
         end if
         set aatsplit = node
     end function
@@ -203,40 +385,11 @@ class taat
         ' fixup
         set node = aatskew(node)
         set node = aatsplit(node)
+        aasetsize node
         set aatputnode = node
     end function
 
-    public function aatdelete(byval data)
-        wscript.echo "** Deleting => ", data
-        set m_root = aatdeletenode(m_root, data)
-        set aatdelete = m_root
-    end function
-
-    private function aatdeletenode(byval node, byval data)
-        if node is m_nil then
-            set node = m_nil
-        elseif node.m_data <> data then
-            dim way : way = node.m_data < data and 1
-            set node.m_child(way) = aatdeletenode(node.m_child(way), data)
-        else ' found it
-            if not node.m_child(0) is m_nil and not node.m_child(1) is m_nil then
-                ' two children find inorder successor
-                dim x : set x = node.m_child(1)
-                do until x.m_child(0) is m_nil
-                    set x = x.m_child(0)
-                loop
-                node.m_data = x.m_data
-                set node.m_child(1) = aatdeletenode(node.m_child(1), x.m_data)
-            else ' one child or leaf node delete it
-                if node.m_child(0) is m_nil then
-                    set node = node.m_child(1)
-                else
-                    set node = node.m_child(0)
-                end if
-                m_cnt = m_cnt-1
-            end if
-        end if
-        ' fixup
+    public function aatbalance(byval node)
         if node.m_child(0).m_level < node.m_level-1 or node.m_child(1).m_level < node.m_level-1 then
             node.m_level = node.m_level-1
             if node.m_child(1).m_level > node.m_level then
@@ -248,7 +401,69 @@ class taat
             set node = aatsplit(node)
             set node.m_child(1) = aatsplit(node.m_child(1))
         end if
-        set aatdeletenode = node
+        aasetsize node
+        set aatbalance = node
+    end function
+
+    public function aatdeletemin()
+        wscript.echo "** Deleting min."
+        set m_root = aatdeleteminn(m_root)
+        set aatdeletemin = m_nil
+    end function
+
+    public function aatdeleteminn(byval node)
+        if node.m_child(0) is m_nil then
+            set aatdeleteminn = node.m_child(1)
+            exit function
+        end if
+        set node.m_child(0) = aatdeleteminn(node.m_child(0))
+        set aatdeleteminn = aatbalance(node)
+    end function
+
+    public function aatdeletemax()
+        wscript.echo "** Deleting max."
+        set m_root = aatdeletemaxn(m_root)
+        set aatdeletemax = m_nil
+    end function
+
+    public function aatdeletemaxn(byval node)
+        if node.m_child(1) is m_nil then
+            set aatdeletemaxn = node.m_child(0)
+            exit function
+        end if
+        set node.m_child(1) = aatdeletemaxn(node.m_child(1))
+        set aatdeletemaxn = aatbalance(node)
+    end function
+
+    public function aatdelete(byval data)
+        wscript.echo "** Deleting => ", data
+        set m_root = aatdeletenode(m_root, data)
+        set aatdelete = m_root
+    end function
+
+    private function aatdeletenode(byval node, byval data)
+        if node is m_nil then
+            set aatdeletenode = m_nil
+            exit function
+        elseif node.m_data <> data then
+            dim way : way = node.m_data < data and 1
+            set node.m_child(way) = aatdeletenode(node.m_child(way), data)
+        else ' found it
+            if not node.m_child(0) is m_nil and not node.m_child(1) is m_nil then
+                ' two children find inorder successor
+                dim x : set x = getminn(node.m_child(1))
+                node.m_data = x.m_data
+                set node.m_child(1) = aatdeletenode(node.m_child(1), x.m_data)
+            else ' one child or leaf node delete it
+                if node.m_child(0) is m_nil then
+                    set node = node.m_child(1)
+                else
+                    set node = node.m_child(0)
+                end if
+                m_cnt = m_cnt-1
+            end if
+        end if
+        set aatdeletenode = aatbalance(node)
     end function
 
     public sub preorder
@@ -350,28 +565,15 @@ class taat
     end sub
 
     public function height()
-        dim qq(), qh, qt, qc : redim qq(QSIZE-1) : qh = 0 : qt = 0 : qc = 0 ' queue variables
-        if m_root is m_nil then
-            height = 0
-            exit function
+        height = heightn(m_root)
+    end function
+
+    public function heightn(byval node)
+        if node is m_nil then
+            heightn = 0
+        else
+            heightn = 1 + max(heightn(node.m_child(0)), heightn(node.m_child(1)))
         end if
-        set qq(qh) = m_root : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue root
-        dim hcnt, lcnt : hcnt = 0 : lcnt = qc
-        do until qc = 0 ' queue empty
-            do until lcnt = 0
-                dim node : set node = qq(qt) : qt = (qt+1) mod QSIZE : qc = qc-1     ' dequeue
-                if not node.m_child(0) is m_nil then
-                    set qq(qh) = node.m_child(0) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue left
-                end if
-                if not node.m_child(1) is m_nil then
-                    set qq(qh) = node.m_child(1) : qh = (qh+1) mod QSIZE : qc = qc+1 ' enqueue right
-                end if
-                lcnt = lcnt-1
-            loop
-            hcnt = hcnt+1
-            lcnt = qc ' set level count to next level size
-        loop
-        height = hcnt
     end function
 
 end class
